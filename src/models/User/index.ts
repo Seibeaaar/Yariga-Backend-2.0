@@ -1,5 +1,7 @@
 import { Schema, model } from "mongoose";
 import { AUTH_PROVIDER, USER_ROLE } from "@/types/user";
+import { MAX_RATING, MIN_RATING } from "@/constants/common";
+import { PropertyPreferences } from "./Preferences";
 
 const UserSchema = new Schema({
   firstName: {
@@ -33,9 +35,9 @@ const UserSchema = new Schema({
   },
   rating: {
     type: Number,
-    min: 0,
-    max: 5,
-    default: 0,
+    min: MIN_RATING,
+    max: MAX_RATING,
+    default: MIN_RATING,
   },
   votes: {
     type: Number,
@@ -72,8 +74,7 @@ const UserSchema = new Schema({
     default: undefined,
   },
   preferences: {
-    type: Object,
-    default: undefined,
+    type: PropertyPreferences,
   },
   joinedAt: {
     type: String,

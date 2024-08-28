@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { COMMON_SERVER_ERROR } from "@/constants/server";
+import { COMMON_SERVER_ERROR } from "@/constants/common";
 import { Document } from "mongoose";
 
 export const generateErrorMesaage = (e: unknown) => {

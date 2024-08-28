@@ -1,3 +1,4 @@
+import { FILE_SIZE_LIMIT_BYTES } from "@/constants/media";
 import aws from "aws-sdk";
 import multer from "multer";
 
@@ -12,7 +13,7 @@ const s3 = new aws.S3();
 export const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 5 * 1024 * 1024,
+    fileSize: FILE_SIZE_LIMIT_BYTES,
   },
 });
 
@@ -20,7 +21,7 @@ export const uploadPhotoToAWS = async (
   file: Express.Multer.File,
 ): Promise<string> => {
   const params = {
-    Bucket: "yariga",
+    Bucket: process.env.AWS_BUCKET_NAME!,
     Key: file.originalname,
     Body: file.buffer,
   };
