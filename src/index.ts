@@ -6,9 +6,13 @@ import helemt from "helmet";
 import mongoose from "mongoose";
 import { MONGO_DB_CONNECT_URI } from "./constants/database";
 
+import AuthRouter from "./routes/auth";
+
 const app = express();
 
+app.use(express.json());
 app.use(helemt());
+app.use("/auth", AuthRouter);
 
 app.listen(5001, async () => {
   try {
@@ -16,7 +20,6 @@ app.listen(5001, async () => {
     console.log("You successfully connected to MongoDB!");
   } catch (e) {
     console.log("Error connecting to database", e);
-  } finally {
     await mongoose.disconnect();
   }
 });

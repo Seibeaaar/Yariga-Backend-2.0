@@ -1,0 +1,1 @@
+export const PASSWORD_HASHING_ROUNDS = 10;
