@@ -4,6 +4,8 @@ import { generateErrorMesaage, omitPasswordForUser } from "@/utils/common";
 import {
   checkEmailAlreadyInUse,
   validateSignUpRequest,
+  validateLoginCredentials,
+  validateLoginRequest,
 } from "@/middlewares/auth";
 import User from "@/models/User";
 import { signJWT } from "@/utils/common";
@@ -30,6 +32,25 @@ AuthRouter.post(
       await user.save();
 
       const token = signJWT(user.id);
+      res.status(201).send({
+        user: omitPasswordForUser(user),
+        token,
+      });
+    } catch (e) {
+      res.status(500).send(generateErrorMesaage(e));
+    }
+  },
+);
+
+AuthRouter.post(
+  "/login",
+  validateLoginRequest,
+  validateLoginCredentials,
+  async (req, res) => {
+    try {
+      const { user } = res.locals;
+      const token = signJWT(user.id);
+
       res.status(201).send({
         user: omitPasswordForUser(user),
         token,

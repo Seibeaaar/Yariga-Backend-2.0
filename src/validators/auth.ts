@@ -19,3 +19,8 @@ export const SIGN_UP_VALIDATION_SCHEMA = yup.object({
     .required("Last name required")
     .matches(NAME_REGEX, "Invalid last name format"),
 });
+
+export const LOGIN_VALIDATION_SCHEMA = yup.object({
+  email: yup.string().required("Email required"),
+  password: yup.string().required("Password required"),
+});
