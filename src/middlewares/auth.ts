@@ -64,9 +64,10 @@ export const validateLoginCredentials = async (
     const { email, password } = req.body;
     const user = await User.findOne({
       email,
+      provider: AUTH_PROVIDER.Password,
     });
 
-    if (!user || user.provider !== AUTH_PROVIDER.Password) {
+    if (!user) {
       throw new Error(`No user with such credentials found`);
     }
 
