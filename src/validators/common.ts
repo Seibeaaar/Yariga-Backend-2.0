@@ -11,7 +11,7 @@ import {
   MIN_FLOORS,
   MIN_FLOOR_LEVEL,
   MIN_ROOMS,
-  MIN_SALE_AMOUNT,
+  MIN_RENT_AMOUNT,
 } from "@/constants/property";
 import { AGREEMENT_TYPE } from "@/types/agreement";
 import {
@@ -31,7 +31,7 @@ export const PROPERTY_PREFERENCES_VALIDATION_SCHEMA = yup.object({
     "floor level",
   ),
   area: buildMinMaxValidation(MIN_AREA, MAX_AREA, "area"),
-  amount: buildMinMaxValidation(MIN_SALE_AMOUNT, MAX_SALE_AMOUNT, "price"),
+  amount: buildMinMaxValidation(MIN_RENT_AMOUNT, MAX_SALE_AMOUNT, "price"),
   rooms: buildMinMaxValidation(MIN_ROOMS, MAX_ROOMS, "rooms"),
   rating: buildMinMaxValidation(MIN_RATING, MAX_RATING, "rating"),
   agreementType: createEnumValidator(AGREEMENT_TYPE),

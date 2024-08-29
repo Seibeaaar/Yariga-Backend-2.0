@@ -77,3 +77,19 @@ export const checkIfTenant = async (
     res.status(403).send(generateErrorMesaage(e));
   }
 };
+
+export const checkIfLandlord = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { user } = res.locals;
+    if (user.role !== USER_ROLE.Landlord) {
+      throw new Error("Only landlord is allowed to perform this operation.");
+    }
+    next();
+  } catch (e) {
+    res.status(403).send(generateErrorMesaage(e));
+  }
+};
