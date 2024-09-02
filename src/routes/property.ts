@@ -3,10 +3,14 @@ import { generateErrorMesaage } from "@/utils/common";
 import Property from "@/models/Property";
 import {
   verifyJWToken,
-  fetchUserFromTokenData,
   checkIfLandlord,
+  fetchUserFromTokenData,
 } from "@/middlewares/common";
-import { validatePropertyRequestBody } from "@/middlewares/property";
+import {
+  checkPropertyByIdParam,
+  checkPropertyOwnership,
+  validatePropertyRequestBody,
+} from "@/middlewares/property";
 import User from "@/models/User";
 import { upload, uploadPhotoToAWS } from "@/utils/media";
 
@@ -24,7 +28,7 @@ PropertyRouter.post(
       if (!req.files || !req.files.length) {
         return res.status(400).send("Property photos required");
       }
-      const { userId, user } = res.locals;
+      const { userId } = res.locals;
       const photoURLs = [];
 
       for (const file of req.files as Express.Multer.File[]) {
@@ -41,7 +45,9 @@ PropertyRouter.post(
       await User.findByIdAndUpdate(
         userId,
         {
-          properties: [...(user.properties || []), property.id],
+          $push: {
+            properties: property.id,
+          },
         },
         {
           new: true,
@@ -49,6 +55,29 @@ PropertyRouter.post(
       );
 
       res.status(201).send(property);
+    } catch (e) {
+      res.status(500).send(generateErrorMesaage(e));
+    }
+  },
+);
+
+PropertyRouter.delete(
+  "/delete/:id",
+  verifyJWToken,
+  checkPropertyByIdParam,
+  checkPropertyOwnership,
+  async (req, res) => {
+    try {
+      const { userId, property } = res.locals;
+
+      await Property.findByIdAndDelete(property.id);
+      await User.findByIdAndUpdate(userId, {
+        $pull: {
+          properties: property.id,
+        },
+      });
+
+      res.status(200).send(`Property ${property.id} deleted successfully.`);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }
