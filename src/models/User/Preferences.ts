@@ -35,7 +35,7 @@ const constructMinMaxPair = (min: number, max: number) => ({
 export const PropertyPreferences = new Schema(
   {
     agreementType: {
-      type: Number,
+      type: String,
       enum: {
         values: Object.values(AGREEMENT_TYPE),
       },
@@ -43,7 +43,7 @@ export const PropertyPreferences = new Schema(
     facilities: {
       type: [
         {
-          type: Number,
+          type: String,
           enum: {
             values: Object.values(PROPERTY_FACILITY),
           },
@@ -52,7 +52,7 @@ export const PropertyPreferences = new Schema(
       default: undefined,
     },
     propertyType: {
-      type: Number,
+      type: String,
       enum: {
         values: Object.values(PROPERTY_TYPE),
       },
@@ -62,7 +62,7 @@ export const PropertyPreferences = new Schema(
     area: constructMinMaxPair(MIN_AREA, MAX_AREA),
     amount: constructMinMaxPair(MIN_SALE_AMOUNT, MAX_SALE_AMOUNT),
     paymentPeriod: {
-      type: Number,
+      type: String,
       enum: {
         values: Object.values(PROPERTY_PAYMENT_PERIOD),
       },

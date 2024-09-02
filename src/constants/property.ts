@@ -18,3 +18,10 @@ export const MAX_FLOOR_LEVEL = 100;
 
 export const MIN_FLOORS = 1;
 export const MAX_FLOORS = 5;
+
+export const MIN_LATITUDE = -90;
+export const MAX_LATITUDE = 90;
+export const MIN_LONGITUDE = -180;
+export const MAX_LONGITUDE = 180;
+
+export const MIN_DESCRPTION_CHARS = 100;

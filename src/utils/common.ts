@@ -12,7 +12,7 @@ export const generateErrorMesaage = (e: unknown) => {
 export const signJWT = (userId: string) => {
   return jwt.sign(
     {
-      exp: Math.floor(Date.now() / 1000) + 60 * 60,
+      exp: Math.floor(Date.now() / 1000) + 4 * 60 * 60,
       data: userId,
     },
     process.env.JWT_SECRET!,
@@ -23,4 +23,14 @@ export const omitPasswordForUser = (user: Document) => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { password: _, ...rest } = user.toObject();
   return rest;
+};
+
+export const processPageQueryParam = (
+  pageParam: string | undefined,
+): number => {
+  if (!pageParam || Number.isNaN(+pageParam)) {
+    return 1;
+  }
+
+  return +pageParam;
 };

@@ -19,7 +19,7 @@ export const USER_COMPLETE_SCHEMA = yup.object({
   role: yup
     .mixed<USER_ROLE>()
     .required("Role required")
-    .test((role) => Object.values(USER_ROLE).includes(role)),
+    .oneOf(Object.values(USER_ROLE)),
   phoneNumber: yup
     .string()
     .required("Phone number required")

@@ -24,12 +24,3 @@ export const buildMinMaxValidation = (
     }),
   });
 };
-
-export function createEnumValidator<T extends object>(enumObject: T) {
-  return yup.mixed<T>().test((value) => {
-    if (value) {
-      return Object.values(enumObject).includes(value as T[keyof T]);
-    }
-    return true;
-  });
-}

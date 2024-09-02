@@ -11,7 +11,7 @@ import {
   MIN_FLOORS,
   MIN_FLOOR_LEVEL,
   MIN_ROOMS,
-  MIN_SALE_AMOUNT,
+  MIN_RENT_AMOUNT,
 } from "@/constants/property";
 import { AGREEMENT_TYPE } from "@/types/agreement";
 import {
@@ -20,7 +20,7 @@ import {
   PROPERTY_TYPE,
 } from "@/types/property";
 import * as yup from "yup";
-import { buildMinMaxValidation, createEnumValidator } from "@/utils/validation";
+import { buildMinMaxValidation } from "@/utils/validation";
 
 export const PROPERTY_PREFERENCES_VALIDATION_SCHEMA = yup.object({
   beds: buildMinMaxValidation(MIN_BEDS, MAX_BEDS, "beds"),
@@ -31,11 +31,17 @@ export const PROPERTY_PREFERENCES_VALIDATION_SCHEMA = yup.object({
     "floor level",
   ),
   area: buildMinMaxValidation(MIN_AREA, MAX_AREA, "area"),
-  amount: buildMinMaxValidation(MIN_SALE_AMOUNT, MAX_SALE_AMOUNT, "price"),
+  amount: buildMinMaxValidation(MIN_RENT_AMOUNT, MAX_SALE_AMOUNT, "price"),
   rooms: buildMinMaxValidation(MIN_ROOMS, MAX_ROOMS, "rooms"),
   rating: buildMinMaxValidation(MIN_RATING, MAX_RATING, "rating"),
-  agreementType: createEnumValidator(AGREEMENT_TYPE),
-  propertyType: createEnumValidator(PROPERTY_TYPE),
-  facilities: yup.array().of(createEnumValidator(PROPERTY_FACILITY)),
-  paymemtPeriod: createEnumValidator(PROPERTY_PAYMENT_PERIOD),
+  agreementType: yup
+    .mixed<AGREEMENT_TYPE>()
+    .oneOf(Object.values(AGREEMENT_TYPE)),
+  propertyType: yup.mixed<PROPERTY_TYPE>().oneOf(Object.values(PROPERTY_TYPE)),
+  facilities: yup
+    .array()
+    .of(yup.mixed<PROPERTY_FACILITY>().oneOf(Object.values(PROPERTY_FACILITY))),
+  paymemtPeriod: yup
+    .mixed<PROPERTY_PAYMENT_PERIOD>()
+    .oneOf(Object.values(PROPERTY_PAYMENT_PERIOD)),
 });
