@@ -14,6 +14,8 @@ import {
 import User from "@/models/User";
 import { upload, uploadPhotoToAWS } from "@/utils/media";
 import { PAGINATION_LIMIT } from "@/constants/common";
+import { buildPropertyFiltersQuery } from "@/utils/property";
+import { validatePropertyPreferences } from "@/middlewares/user";
 
 const PropertyRouter = Router();
 
@@ -72,6 +74,35 @@ PropertyRouter.post("/search", verifyJWToken, async (req, res) => {
     res.status(500).send(generateErrorMesaage(e));
   }
 });
+
+PropertyRouter.post(
+  "/filter",
+  verifyJWToken,
+  validatePropertyPreferences,
+  async (req, res) => {
+    try {
+      const filtersQuery = buildPropertyFiltersQuery(req.body);
+      const pageNumber = processPageQueryParam(
+        req.params.page as string | undefined,
+      );
+      const startIndex = (pageNumber - 1) * PAGINATION_LIMIT;
+
+      const results = await Property.find(filtersQuery)
+        .skip(startIndex)
+        .limit(PAGINATION_LIMIT);
+      const total = results.length;
+
+      res.status(200).send({
+        total,
+        page: pageNumber,
+        pages: Math.ceil(total / PAGINATION_LIMIT),
+        results,
+      });
+    } catch (e) {
+      res.status(500).send(generateErrorMesaage(e));
+    }
+  },
+);
 
 PropertyRouter.post(
   "/add",

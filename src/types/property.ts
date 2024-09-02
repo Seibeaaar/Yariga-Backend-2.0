@@ -1,3 +1,5 @@
+import { AGREEMENT_TYPE } from "./agreement";
+
 export enum PROPERTY_TYPE {
   House = "house",
   Apartment = "apartment",
@@ -20,3 +22,22 @@ export enum PROPERTY_PAYMENT_PERIOD {
   Monthly = "monthly",
   Yearly = "yearly",
 }
+
+type MinMaxPair = {
+  min: number;
+  max: number;
+};
+
+export type PropertyFilters = {
+  beds?: MinMaxPair;
+  rooms?: MinMaxPair;
+  floors?: MinMaxPair;
+  floorLevel?: MinMaxPair;
+  area?: MinMaxPair;
+  amount?: MinMaxPair;
+  agreementType?: AGREEMENT_TYPE[];
+  paymentPeriod?: PROPERTY_PAYMENT_PERIOD[];
+  propertyType?: PROPERTY_TYPE[];
+  rating?: MinMaxPair;
+  facilities?: PROPERTY_FACILITY[];
+};
