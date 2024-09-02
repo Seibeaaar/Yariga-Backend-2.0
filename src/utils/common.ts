@@ -12,7 +12,7 @@ export const generateErrorMesaage = (e: unknown) => {
 export const signJWT = (userId: string) => {
   return jwt.sign(
     {
-      exp: Math.floor(Date.now() / 1000) + 60 * 60,
+      exp: Math.floor(Date.now() / 1000) + 4 * 60 * 60,
       data: userId,
     },
     process.env.JWT_SECRET!,

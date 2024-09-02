@@ -55,7 +55,7 @@ const PropertySchema = new Schema({
     },
   },
   amount: {
-    type: String,
+    type: Number,
     required: true,
     min: MIN_RENT_AMOUNT,
     max: MAX_SALE_AMOUNT,

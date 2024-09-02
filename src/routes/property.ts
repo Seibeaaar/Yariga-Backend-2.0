@@ -61,6 +61,34 @@ PropertyRouter.post(
   },
 );
 
+PropertyRouter.put(
+  "/update/:id",
+  verifyJWToken,
+  checkPropertyByIdParam,
+  checkPropertyOwnership,
+  upload.array("photos"),
+  validatePropertyRequestBody,
+  async (req, res) => {
+    try {
+      if (!req.files || !req.files.length) {
+        return res.status(400).send("Property photos required");
+      }
+      const { property } = res.locals;
+      const updatedProperty = await Property.findByIdAndUpdate(
+        property.id,
+        req.body,
+        {
+          new: true,
+        },
+      );
+
+      res.status(200).send(updatedProperty);
+    } catch (e) {
+      res.status(500).send(generateErrorMesaage(e));
+    }
+  },
+);
+
 PropertyRouter.delete(
   "/delete/:id",
   verifyJWToken,
