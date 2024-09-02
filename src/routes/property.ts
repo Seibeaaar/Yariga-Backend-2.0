@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { generateErrorMesaage } from "@/utils/common";
+import { generateErrorMesaage, processPageQueryParam } from "@/utils/common";
 import Property from "@/models/Property";
 import {
   verifyJWToken,
@@ -13,8 +13,65 @@ import {
 } from "@/middlewares/property";
 import User from "@/models/User";
 import { upload, uploadPhotoToAWS } from "@/utils/media";
+import { PAGINATION_LIMIT } from "@/constants/common";
 
 const PropertyRouter = Router();
+
+PropertyRouter.get("/", verifyJWToken, async (req, res) => {
+  try {
+    const pageNumber = processPageQueryParam(
+      req.query.page as string | undefined,
+    );
+    const startIndex = (pageNumber - 1) * PAGINATION_LIMIT;
+
+    const properties = await Property.find()
+      .skip(startIndex)
+      .limit(PAGINATION_LIMIT);
+    const total = await Property.countDocuments();
+
+    res.status(200).send({
+      total,
+      page: pageNumber,
+      pages: Math.ceil(total / PAGINATION_LIMIT),
+      results: properties,
+    });
+  } catch (e) {
+    res.status(500).send(generateErrorMesaage(e));
+  }
+});
+
+PropertyRouter.post("/search", verifyJWToken, async (req, res) => {
+  try {
+    const { q = "", page } = req.query;
+    const pageNumber = processPageQueryParam(page as string | undefined);
+    const startIndex = (pageNumber - 1) * PAGINATION_LIMIT;
+
+    const regex = new RegExp(q as string, "i");
+
+    const results = await Property.find({
+      $or: [
+        {
+          "location.title": { $regex: regex },
+        },
+        { description: { $regex: regex } },
+        { title: { $regex: regex } },
+      ],
+    })
+      .skip(startIndex)
+      .limit(PAGINATION_LIMIT);
+
+    const total = results.length;
+
+    res.status(200).send({
+      total,
+      page: pageNumber,
+      pages: Math.ceil(total / PAGINATION_LIMIT),
+      results,
+    });
+  } catch (e) {
+    res.status(500).send(generateErrorMesaage(e));
+  }
+});
 
 PropertyRouter.post(
   "/add",

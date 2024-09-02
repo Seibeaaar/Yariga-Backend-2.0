@@ -24,3 +24,13 @@ export const omitPasswordForUser = (user: Document) => {
   const { password: _, ...rest } = user.toObject();
   return rest;
 };
+
+export const processPageQueryParam = (
+  pageParam: string | undefined,
+): number => {
+  if (!pageParam || Number.isNaN(+pageParam)) {
+    return 1;
+  }
+
+  return +pageParam;
+};
