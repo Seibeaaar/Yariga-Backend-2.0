@@ -1,0 +1,2 @@
+export const MAX_START_DATE_THRESHOLD = 30;
+export const MIN_START_DATE_THRESHOLD = 1;
