@@ -43,6 +43,10 @@ const PropertySchema = new Schema({
       values: Object.values(PROPERTY_TYPE),
     },
   },
+  owner: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+  },
   agreementType: {
     type: String,
     required: true,

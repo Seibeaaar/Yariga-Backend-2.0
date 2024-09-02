@@ -27,7 +27,7 @@ app.use(passport.session());
 app.use(helemt());
 
 app.use("/auth", AuthRouter);
-app.use("/user", UserRouter);
+app.use("/users", UserRouter);
 app.use("/property", PropertyRouter);
 
 app.listen(5001, async () => {

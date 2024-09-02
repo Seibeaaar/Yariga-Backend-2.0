@@ -24,7 +24,7 @@ PropertyRouter.post(
       if (!req.files || !req.files.length) {
         return res.status(400).send("Property photos required");
       }
-
+      const { userId, user } = res.locals;
       const photoURLs = [];
 
       for (const file of req.files as Express.Multer.File[]) {
@@ -35,10 +35,9 @@ PropertyRouter.post(
       const property = new Property({
         ...req.body,
         photos: photoURLs,
+        owner: userId,
       });
       await property.save();
-
-      const { userId, user } = res.locals;
       await User.findByIdAndUpdate(
         userId,
         {

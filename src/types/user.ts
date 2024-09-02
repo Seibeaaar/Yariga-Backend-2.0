@@ -1,9 +1,9 @@
 export enum AUTH_PROVIDER {
-  Password = 0,
-  Google = 1,
+  Password = "password",
+  Google = "google",
 }
 
 export enum USER_ROLE {
-  Landlord = 0,
-  Tenant = 1,
+  Landlord = "landlord",
+  Tenant = "tenant",
 }

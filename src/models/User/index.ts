@@ -44,13 +44,13 @@ const UserSchema = new Schema({
     default: 0,
   },
   role: {
-    type: Number,
+    type: String,
     enum: {
       values: Object.values(USER_ROLE),
     },
   },
   provider: {
-    type: Number,
+    type: String,
     enum: {
       values: Object.values(AUTH_PROVIDER),
     },
