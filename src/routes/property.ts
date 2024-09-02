@@ -5,6 +5,7 @@ import {
   verifyJWToken,
   checkIfLandlord,
   fetchUserFromTokenData,
+  checkIfTenant,
 } from "@/middlewares/common";
 import {
   checkPropertyByIdParam,
@@ -13,7 +14,10 @@ import {
 } from "@/middlewares/property";
 import User from "@/models/User";
 import { upload, uploadPhotoToAWS } from "@/utils/media";
-import { PAGINATION_LIMIT } from "@/constants/common";
+import {
+  PAGINATION_LIMIT,
+  RECOMMENDATIONS_TOTAL_LIMIT,
+} from "@/constants/common";
 import { buildPropertyFiltersQuery } from "@/utils/property";
 import { validatePropertyPreferences } from "@/middlewares/user";
 
@@ -194,6 +198,40 @@ PropertyRouter.delete(
       });
 
       res.status(200).send(`Property ${property.id} deleted successfully.`);
+    } catch (e) {
+      res.status(500).send(generateErrorMesaage(e));
+    }
+  },
+);
+
+PropertyRouter.get(
+  "/recommendations",
+  verifyJWToken,
+  fetchUserFromTokenData,
+  checkIfTenant,
+  async (req, res) => {
+    try {
+      const { user } = res.locals;
+      const query = buildPropertyFiltersQuery(user.preferences || {});
+
+      const pageNumber = processPageQueryParam(
+        req.params.page as string | undefined,
+      );
+      const startIndex = (pageNumber - 1) * PAGINATION_LIMIT;
+
+      const results = await Property.find(query)
+        .limit(RECOMMENDATIONS_TOTAL_LIMIT)
+        .skip(startIndex)
+        .limit(PAGINATION_LIMIT);
+
+      const total = results.length;
+
+      res.status(200).send({
+        total,
+        page: pageNumber,
+        pages: Math.ceil(total / PAGINATION_LIMIT),
+        results,
+      });
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }

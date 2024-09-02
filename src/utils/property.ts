@@ -19,8 +19,11 @@ import {
   PROPERTY_TYPE,
   PropertyFilters,
 } from "@/types/property";
+import { FilterQuery } from "mongoose";
 
-export const buildPropertyFiltersQuery = (filters: PropertyFilters) => {
+export const buildPropertyFiltersQuery = (
+  filters: PropertyFilters,
+): FilterQuery<PropertyFilters> => {
   return {
     amount: {
       $gte: filters.amount?.min || MIN_RENT_AMOUNT,
