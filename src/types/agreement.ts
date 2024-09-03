@@ -7,4 +7,5 @@ export enum AGREEMENT_STATUS {
   Pending = "pending",
   Declined = "declined",
   Accepted = "accepted",
+  Countered = "countered",
 }

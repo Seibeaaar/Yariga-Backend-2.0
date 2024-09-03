@@ -1,24 +1,28 @@
 import {
+  ARCHIVED_AGREEMENT_STATUSES,
   MAX_START_DATE_THRESHOLD,
   MIN_START_DATE_THRESHOLD,
+  NON_ARCHIVED_AGREEMENT_STATUSES,
 } from "@/constants/agreement";
 import { MAX_SALE_AMOUNT, MIN_RENT_AMOUNT } from "@/constants/property";
-import { AGREEMENT_STATUS, AGREEMENT_TYPE } from "@/types/agreement";
+import { AGREEMENT_TYPE } from "@/types/agreement";
 import { PROPERTY_PAYMENT_PERIOD } from "@/types/property";
 import dayjs from "dayjs";
 import { isValidObjectId } from "mongoose";
 import * as yup from "yup";
 
-export const AGREEMENT_FILTER_SCHEMA = yup.object({
-  type: yup
-    .array()
-    .of(yup.mixed<AGREEMENT_TYPE>().oneOf(Object.values(AGREEMENT_TYPE)))
-    .default(Object.values(AGREEMENT_TYPE)),
-  status: yup
-    .array()
-    .of(yup.mixed<AGREEMENT_STATUS>().oneOf(Object.values(AGREEMENT_STATUS)))
-    .default(Object.values(AGREEMENT_STATUS)),
-});
+export const buildAgreementFiltersSchema = (isArchived: boolean) => {
+  const statuses = isArchived
+    ? ARCHIVED_AGREEMENT_STATUSES
+    : NON_ARCHIVED_AGREEMENT_STATUSES;
+  return yup.object({
+    type: yup
+      .array()
+      .of(yup.string().oneOf(Object.values(AGREEMENT_TYPE)))
+      .default(Object.values(AGREEMENT_TYPE)),
+    status: yup.array().of(yup.string().oneOf(statuses)),
+  });
+};
 
 export const AGREEMENT_VALIDATION_SCHEMA = yup.object({
   tenant: yup

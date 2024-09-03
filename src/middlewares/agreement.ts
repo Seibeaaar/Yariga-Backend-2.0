@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import {
   AGREEMENT_VALIDATION_SCHEMA,
-  AGREEMENT_FILTER_SCHEMA,
+  buildAgreementFiltersSchema,
 } from "@/validators/agreement";
 import { generateErrorMesaage } from "@/utils/common";
 import User from "@/models/User";
@@ -28,7 +28,20 @@ export const validateAgreementFilters = async (
   next: NextFunction,
 ) => {
   try {
-    await AGREEMENT_FILTER_SCHEMA.validate(req.body);
+    await buildAgreementFiltersSchema(false).validate(req.body);
+    next();
+  } catch (e) {
+    res.status(400).send(generateErrorMesaage(e));
+  }
+};
+
+export const validateArchivedAgreementFilters = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    await buildAgreementFiltersSchema(true).validate(req.body);
     next();
   } catch (e) {
     res.status(400).send(generateErrorMesaage(e));

@@ -4,6 +4,7 @@ import {
   validateAgreementEntities,
   validateAgreementFilters,
   validateAgreementRequestBody,
+  validateArchivedAgreementFilters,
 } from "@/middlewares/agreement";
 import {
   checkIfTenant,
@@ -67,7 +68,7 @@ AgreementRouter.get(
   "/archived",
   verifyJWToken,
   fetchUserFromTokenData,
-  validateAgreementFilters,
+  validateArchivedAgreementFilters,
   async (req, res) => {
     try {
       const { user } = res.locals;
@@ -145,7 +146,7 @@ AgreementRouter.post(
         uniqueNumber: getAgreementUniqueNumber(),
       });
       await agreement.save();
-      res.status(200).send(agreement);
+      res.status(201).send(agreement);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }
@@ -219,6 +220,41 @@ AgreementRouter.put(
       );
 
       res.status(200).send(declinedAgreement);
+    } catch (e) {
+      res.status(500).send(generateErrorMesaage(e));
+    }
+  },
+);
+
+AgreementRouter.post(
+  "/:id/counter",
+  verifyJWToken,
+  checkAgreementIdParam,
+  checkIsAgreementCounterpart,
+  validateAgreementRequestBody,
+  validateAgreementEntities,
+  async (req, res) => {
+    try {
+      const { userId, agreement } = res.locals;
+      const counterAgreement = new Agreement({
+        ...req.body,
+        creator: userId,
+        parent: agreement.id,
+      });
+
+      await counterAgreement.save();
+      await Agreement.findByIdAndUpdate(
+        agreement.id,
+        {
+          isArchived: true,
+          status: AGREEMENT_STATUS.Countered,
+        },
+        {
+          new: true,
+        },
+      );
+
+      res.status(201).send(counterAgreement);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }
