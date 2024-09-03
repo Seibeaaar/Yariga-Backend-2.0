@@ -56,6 +56,14 @@ const AgreementSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  createdAt: {
+    type: String,
+    default: new Date().toISOString(),
+  },
+  uniqueNumber: {
+    type: String,
+    required: true,
+  },
 });
 
 export default model("Agreement", AgreementSchema);

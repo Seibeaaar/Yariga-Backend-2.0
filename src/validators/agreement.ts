@@ -3,11 +3,22 @@ import {
   MIN_START_DATE_THRESHOLD,
 } from "@/constants/agreement";
 import { MAX_SALE_AMOUNT, MIN_RENT_AMOUNT } from "@/constants/property";
-import { AGREEMENT_TYPE } from "@/types/agreement";
+import { AGREEMENT_STATUS, AGREEMENT_TYPE } from "@/types/agreement";
 import { PROPERTY_PAYMENT_PERIOD } from "@/types/property";
 import dayjs from "dayjs";
 import { isValidObjectId } from "mongoose";
 import * as yup from "yup";
+
+export const AGREEMENT_FILTER_SCHEMA = yup.object({
+  type: yup
+    .array()
+    .of(yup.mixed<AGREEMENT_TYPE>().oneOf(Object.values(AGREEMENT_TYPE)))
+    .default(Object.values(AGREEMENT_TYPE)),
+  status: yup
+    .array()
+    .of(yup.mixed<AGREEMENT_STATUS>().oneOf(Object.values(AGREEMENT_STATUS)))
+    .default(Object.values(AGREEMENT_STATUS)),
+});
 
 export const AGREEMENT_VALIDATION_SCHEMA = yup.object({
   tenant: yup

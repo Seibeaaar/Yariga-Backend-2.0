@@ -1,5 +1,8 @@
 import { Request, Response, NextFunction } from "express";
-import { AGREEMENT_VALIDATION_SCHEMA } from "@/validators/agreement";
+import {
+  AGREEMENT_VALIDATION_SCHEMA,
+  AGREEMENT_FILTER_SCHEMA,
+} from "@/validators/agreement";
 import { generateErrorMesaage } from "@/utils/common";
 import User from "@/models/User";
 import Property from "@/models/Property";
@@ -13,6 +16,19 @@ export const validateAgreementRequestBody = async (
 ) => {
   try {
     await AGREEMENT_VALIDATION_SCHEMA.validate(req.body);
+    next();
+  } catch (e) {
+    res.status(400).send(generateErrorMesaage(e));
+  }
+};
+
+export const validateAgreementFilters = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    await AGREEMENT_FILTER_SCHEMA.validate(req.body);
     next();
   } catch (e) {
     res.status(400).send(generateErrorMesaage(e));
