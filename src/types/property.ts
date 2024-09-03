@@ -23,6 +23,11 @@ export enum PROPERTY_PAYMENT_PERIOD {
   Yearly = "yearly",
 }
 
+export enum PROPERTY_STATUS {
+  Free = "free",
+  Sold = "sold",
+}
+
 type MinMaxPair = {
   min: number;
   max: number;

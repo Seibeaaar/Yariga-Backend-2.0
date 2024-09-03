@@ -48,6 +48,14 @@ const AgreementSchema = new Schema({
     ref: "Agreement",
     default: null,
   },
+  creator: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+  },
+  isArchived: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 export default model("Agreement", AgreementSchema);
