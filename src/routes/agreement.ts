@@ -63,6 +63,72 @@ AgreementRouter.get(
   },
 );
 
+AgreementRouter.get(
+  "/archived",
+  verifyJWToken,
+  fetchUserFromTokenData,
+  validateAgreementFilters,
+  async (req, res) => {
+    try {
+      const { user } = res.locals;
+      const pageNumber = processPageQueryParam(
+        req.query.page as string | undefined,
+      );
+
+      const startIndex = (pageNumber - 1) * PAGINATION_LIMIT;
+
+      const query = Agreement.find({
+        [user.role === USER_ROLE.Landlord ? "landlord" : "tenant"]: user.id,
+        isArchived: true,
+        status: {
+          $in: req.body.status,
+        },
+        type: {
+          $in: req.body.type,
+        },
+      });
+
+      const myAgreements = await query.skip(startIndex).limit(PAGINATION_LIMIT);
+      const total = await query.countDocuments();
+
+      res.status(200).send({
+        results: myAgreements,
+        total,
+        page: pageNumber,
+        pages: Math.ceil(total / PAGINATION_LIMIT),
+      });
+    } catch (e) {
+      res.status(500).send(generateErrorMesaage(e));
+    }
+  },
+);
+
+AgreementRouter.get("/search", verifyJWToken, async (req, res) => {
+  try {
+    const { q = "", page } = req.query;
+    const pageNumber = processPageQueryParam(page as string | undefined);
+    const startIndex = (pageNumber - 1) * PAGINATION_LIMIT;
+
+    const query = Agreement.find({
+      uniqueNumber: {
+        $regex: new RegExp(q as string, "i"),
+      },
+    });
+
+    const agreements = await query.skip(startIndex).limit(PAGINATION_LIMIT);
+    const total = await query.countDocuments();
+
+    res.status(200).send({
+      results: agreements,
+      total,
+      page: pageNumber,
+      pages: Math.ceil(total / PAGINATION_LIMIT),
+    });
+  } catch (e) {
+    res.status(500).send(generateErrorMesaage(e));
+  }
+});
+
 AgreementRouter.post(
   "/create",
   verifyJWToken,
