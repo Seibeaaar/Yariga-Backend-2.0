@@ -1,6 +1,7 @@
 import {
   checkAgreementIdParam,
   checkIsAgreementCounterpart,
+  checkIsAgreementOwner,
   validateAgreementEntities,
   validateAgreementFilters,
   validateAgreementRequestBody,
@@ -255,6 +256,33 @@ AgreementRouter.post(
       );
 
       res.status(201).send(counterAgreement);
+    } catch (e) {
+      res.status(500).send(generateErrorMesaage(e));
+    }
+  },
+);
+
+AgreementRouter.delete(
+  "/:id",
+  verifyJWToken,
+  checkAgreementIdParam,
+  checkIsAgreementOwner,
+  async (req, res) => {
+    try {
+      const { agreement } = res.locals;
+      await Agreement.findByIdAndDelete(agreement.id);
+      await Agreement.updateMany(
+        {
+          parent: agreement.id,
+        },
+        {
+          parent: null,
+        },
+      );
+
+      res
+        .status(200)
+        .send(`Agreement ${agreement.id} was deleted successfully`);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }
