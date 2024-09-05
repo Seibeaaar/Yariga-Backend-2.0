@@ -3,7 +3,7 @@ import { AUTH_PROVIDER, USER_ROLE } from "@/types/user";
 import { MAX_RATING, MIN_RATING } from "@/constants/common";
 import { PropertyPreferences } from "./Preferences";
 
-const UserSchema = new Schema({
+export const UserSchema = new Schema({
   firstName: {
     type: String,
     required: true,

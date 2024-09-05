@@ -12,6 +12,7 @@ import AuthRouter from "./routes/auth";
 import UserRouter from "./routes/user";
 import PropertyRouter from "./routes/property";
 import AgreementRouter from "./routes/agreement";
+import NotificationRouter from "./routes/notification";
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use("/auth", AuthRouter);
 app.use("/user", UserRouter);
 app.use("/property", PropertyRouter);
 app.use("/agreement", AgreementRouter);
+app.use("/notification", NotificationRouter);
 
 app.listen(5001, async () => {
   try {
