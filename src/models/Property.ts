@@ -20,7 +20,7 @@ import {
 } from "@/types/property";
 import { Schema, model } from "mongoose";
 
-const PropertySchema = new Schema({
+export const PropertySchema = new Schema({
   title: {
     type: String,
     required: true,

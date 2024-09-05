@@ -2,7 +2,7 @@ import { MAX_SALE_AMOUNT, MIN_RENT_AMOUNT } from "@/constants/property";
 import { AGREEMENT_STATUS, AGREEMENT_TYPE } from "@/types/agreement";
 import { Schema, model } from "mongoose";
 
-const AgreementSchema = new Schema({
+export const AgreementSchema = new Schema({
   tenant: {
     type: Schema.Types.ObjectId,
     ref: "User",

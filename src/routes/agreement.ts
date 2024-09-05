@@ -15,11 +15,14 @@ import {
 import Agreement from "@/models/Agreement";
 import Property from "@/models/Property";
 import User from "@/models/User";
-import { AGREEMENT_STATUS, AGREEMENT_TYPE } from "@/types/agreement";
+import {
+  AGREEMENT_STATUS,
+  AGREEMENT_TYPE,
+  AgreementDocument,
+} from "@/types/agreement";
 import { PROPERTY_STATUS } from "@/types/property";
 import { USER_ROLE } from "@/types/user";
-import { generateErrorMesaage, processPageQueryParam } from "@/utils/common";
-import { PAGINATION_LIMIT } from "@/constants/common";
+import { generateErrorMesaage, makePaginatedRequest } from "@/utils/common";
 import { getAgreementUniqueNumber } from "@/utils/agreement";
 import { Router } from "express";
 import {
@@ -37,12 +40,6 @@ AgreementRouter.get(
   async (req, res) => {
     try {
       const { user } = res.locals;
-      const pageNumber = processPageQueryParam(
-        req.query.page as string | undefined,
-      );
-
-      const startIndex = (pageNumber - 1) * PAGINATION_LIMIT;
-
       const query = {
         [user.role === USER_ROLE.Landlord ? "landlord" : "tenant"]: user.id,
         isArchived: false,
@@ -54,17 +51,13 @@ AgreementRouter.get(
         },
       };
 
-      const myAgreements = await Agreement.find(query)
-        .skip(startIndex)
-        .limit(PAGINATION_LIMIT);
-      const total = await Agreement.find(query).countDocuments();
+      const paginatedResponse = await makePaginatedRequest<AgreementDocument>(
+        Agreement,
+        query,
+        req.query.page as string | undefined,
+      );
 
-      res.status(200).send({
-        results: myAgreements,
-        total,
-        page: pageNumber,
-        pages: Math.ceil(total / PAGINATION_LIMIT),
-      });
+      res.status(200).send(paginatedResponse);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }
@@ -79,12 +72,6 @@ AgreementRouter.get(
   async (req, res) => {
     try {
       const { user } = res.locals;
-      const pageNumber = processPageQueryParam(
-        req.query.page as string | undefined,
-      );
-
-      const startIndex = (pageNumber - 1) * PAGINATION_LIMIT;
-
       const query = {
         [user.role === USER_ROLE.Landlord ? "landlord" : "tenant"]: user.id,
         isArchived: true,
@@ -96,17 +83,13 @@ AgreementRouter.get(
         },
       };
 
-      const myAgreements = await Agreement.find(query)
-        .skip(startIndex)
-        .limit(PAGINATION_LIMIT);
-      const total = await Agreement.find(query).countDocuments();
+      const paginatedResponse = await makePaginatedRequest(
+        Agreement,
+        query,
+        req.query.page as string | undefined,
+      );
 
-      res.status(200).send({
-        results: myAgreements,
-        total,
-        page: pageNumber,
-        pages: Math.ceil(total / PAGINATION_LIMIT),
-      });
+      res.status(200).send(paginatedResponse);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }
@@ -116,8 +99,6 @@ AgreementRouter.get(
 AgreementRouter.get("/search", verifyJWToken, async (req, res) => {
   try {
     const { q = "", page } = req.query;
-    const pageNumber = processPageQueryParam(page as string | undefined);
-    const startIndex = (pageNumber - 1) * PAGINATION_LIMIT;
 
     const query = {
       uniqueNumber: {
@@ -125,17 +106,13 @@ AgreementRouter.get("/search", verifyJWToken, async (req, res) => {
       },
     };
 
-    const agreements = await Agreement.find(query)
-      .skip(startIndex)
-      .limit(PAGINATION_LIMIT);
-    const total = await Agreement.find(query).countDocuments();
+    const paginatedResponse = await makePaginatedRequest(
+      Agreement,
+      query,
+      page as string | undefined,
+    );
 
-    res.status(200).send({
-      results: agreements,
-      total,
-      page: pageNumber,
-      pages: Math.ceil(total / PAGINATION_LIMIT),
-    });
+    res.status(200).send(paginatedResponse);
   } catch (e) {
     res.status(500).send(generateErrorMesaage(e));
   }

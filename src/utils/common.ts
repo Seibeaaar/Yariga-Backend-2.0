@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import { COMMON_SERVER_ERROR } from "@/constants/common";
-import { Document } from "mongoose";
+import { Document, FilterQuery, Model } from "mongoose";
+import { PAGINATION_LIMIT } from "@/constants/common";
 
 export const generateErrorMesaage = (e: unknown) => {
   if (e instanceof Error) {
@@ -33,4 +34,27 @@ export const processPageQueryParam = (
   }
 
   return +pageParam;
+};
+
+export const makePaginatedRequest = async <T>(
+  model: Model<T>,
+  query: FilterQuery<object>,
+  page?: string,
+  totalLimit?: number,
+) => {
+  const pageNumber = processPageQueryParam(page);
+  const startIndex = (pageNumber - 1) * PAGINATION_LIMIT;
+  const results = await model
+    .find(query)
+    .limit(totalLimit ?? Number.MAX_SAFE_INTEGER)
+    .skip(startIndex)
+    .limit(PAGINATION_LIMIT);
+  const total = await model.find(query).countDocuments();
+
+  return {
+    total,
+    page: pageNumber,
+    results,
+    pages: Math.ceil(total / PAGINATION_LIMIT),
+  };
 };
