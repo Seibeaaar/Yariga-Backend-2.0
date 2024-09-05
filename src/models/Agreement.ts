@@ -64,6 +64,10 @@ export const AgreementSchema = new Schema({
     type: String,
     required: true,
   },
+  updatedAt: {
+    type: String,
+    default: null,
+  },
 });
 
 export default model("Agreement", AgreementSchema);

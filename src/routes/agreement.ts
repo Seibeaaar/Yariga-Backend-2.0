@@ -278,4 +278,27 @@ AgreementRouter.delete(
   },
 );
 
+AgreementRouter.put(
+  "/:id/update",
+  verifyJWToken,
+  fetchUserFromTokenData,
+  checkAgreementIdParam,
+  checkIsAgreementOwner,
+  validateAgreementRequestBody,
+  validateAgreementEntities,
+  async (req, res) => {
+    try {
+      const { agreement } = res.locals;
+      const updatedAgreement = await Agreement.findByIdAndUpdate(agreement.id, {
+        ...req.body,
+        updatedAt: new Date().toISOString(),
+      });
+
+      res.status(200).send(updatedAgreement);
+    } catch (e) {
+      res.status(500).send(generateErrorMesaage(e));
+    }
+  },
+);
+
 export default AgreementRouter;
