@@ -11,6 +11,7 @@ import { MONGO_DB_CONNECT_URI } from "./constants/database";
 import AuthRouter from "./routes/auth";
 import UserRouter from "./routes/user";
 import PropertyRouter from "./routes/property";
+import AgreementRouter from "./routes/agreement";
 
 const app = express();
 
@@ -27,8 +28,9 @@ app.use(passport.session());
 app.use(helemt());
 
 app.use("/auth", AuthRouter);
-app.use("/users", UserRouter);
+app.use("/user", UserRouter);
 app.use("/property", PropertyRouter);
+app.use("/agreement", AgreementRouter);
 
 app.listen(5001, async () => {
   try {

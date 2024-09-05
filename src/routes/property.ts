@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { generateErrorMesaage, processPageQueryParam } from "@/utils/common";
+import {
+  generateErrorMesaage,
+  makePaginatedRequest,
+  processPageQueryParam,
+} from "@/utils/common";
 import Property from "@/models/Property";
 import {
   verifyJWToken,
@@ -12,6 +16,7 @@ import {
   checkPropertyOwnership,
   validatePropertyRequestBody,
 } from "@/middlewares/property";
+import { PropertyDoc } from "@/types/property";
 import User from "@/models/User";
 import { upload, uploadPhotoToAWS } from "@/utils/media";
 import {
@@ -46,15 +51,11 @@ PropertyRouter.get("/", verifyJWToken, async (req, res) => {
   }
 });
 
-PropertyRouter.post("/search", verifyJWToken, async (req, res) => {
+PropertyRouter.get("/search", verifyJWToken, async (req, res) => {
   try {
     const { q = "", page } = req.query;
-    const pageNumber = processPageQueryParam(page as string | undefined);
-    const startIndex = (pageNumber - 1) * PAGINATION_LIMIT;
-
     const regex = new RegExp(q as string, "i");
-
-    const results = await Property.find({
+    const query = {
       $or: [
         {
           "location.title": { $regex: regex },
@@ -62,18 +63,15 @@ PropertyRouter.post("/search", verifyJWToken, async (req, res) => {
         { description: { $regex: regex } },
         { title: { $regex: regex } },
       ],
-    })
-      .skip(startIndex)
-      .limit(PAGINATION_LIMIT);
+    };
 
-    const total = results.length;
+    const paginatedResponse = await makePaginatedRequest<PropertyDoc>(
+      Property,
+      query,
+      page as string | undefined,
+    );
 
-    res.status(200).send({
-      total,
-      page: pageNumber,
-      pages: Math.ceil(total / PAGINATION_LIMIT),
-      results,
-    });
+    res.status(200).send(paginatedResponse);
   } catch (e) {
     res.status(500).send(generateErrorMesaage(e));
   }
@@ -86,22 +84,13 @@ PropertyRouter.post(
   async (req, res) => {
     try {
       const filtersQuery = buildPropertyFiltersQuery(req.body);
-      const pageNumber = processPageQueryParam(
-        req.params.page as string | undefined,
+      const paginatedResponse = await makePaginatedRequest<PropertyDoc>(
+        Property,
+        filtersQuery,
+        req.query.page as string | undefined,
       );
-      const startIndex = (pageNumber - 1) * PAGINATION_LIMIT;
 
-      const results = await Property.find(filtersQuery)
-        .skip(startIndex)
-        .limit(PAGINATION_LIMIT);
-      const total = results.length;
-
-      res.status(200).send({
-        total,
-        page: pageNumber,
-        pages: Math.ceil(total / PAGINATION_LIMIT),
-        results,
-      });
+      res.status(200).send(paginatedResponse);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }
@@ -214,24 +203,14 @@ PropertyRouter.get(
       const { user } = res.locals;
       const query = buildPropertyFiltersQuery(user.preferences || {});
 
-      const pageNumber = processPageQueryParam(
-        req.params.page as string | undefined,
+      const paginatedResponse = await makePaginatedRequest<PropertyDoc>(
+        Property,
+        query,
+        req.query.page as string | undefined,
+        RECOMMENDATIONS_TOTAL_LIMIT,
       );
-      const startIndex = (pageNumber - 1) * PAGINATION_LIMIT;
 
-      const results = await Property.find(query)
-        .limit(RECOMMENDATIONS_TOTAL_LIMIT)
-        .skip(startIndex)
-        .limit(PAGINATION_LIMIT);
-
-      const total = results.length;
-
-      res.status(200).send({
-        total,
-        page: pageNumber,
-        pages: Math.ceil(total / PAGINATION_LIMIT),
-        results,
-      });
+      res.status(200).send(paginatedResponse);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }

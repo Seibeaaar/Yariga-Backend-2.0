@@ -15,11 +15,12 @@ import { AGREEMENT_TYPE } from "@/types/agreement";
 import {
   PROPERTY_FACILITY,
   PROPERTY_PAYMENT_PERIOD,
+  PROPERTY_STATUS,
   PROPERTY_TYPE,
 } from "@/types/property";
 import { Schema, model } from "mongoose";
 
-const PropertySchema = new Schema({
+export const PropertySchema = new Schema({
   title: {
     type: String,
     required: true,
@@ -126,6 +127,13 @@ const PropertySchema = new Schema({
   votes: {
     type: Number,
     default: 0,
+  },
+  status: {
+    type: String,
+    enum: {
+      values: Object.values(PROPERTY_STATUS),
+    },
+    default: PROPERTY_STATUS.Free,
   },
 });
 

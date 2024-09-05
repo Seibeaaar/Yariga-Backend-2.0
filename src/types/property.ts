@@ -1,4 +1,6 @@
+import { InferSchemaType } from "mongoose";
 import { AGREEMENT_TYPE } from "./agreement";
+import { PropertySchema } from "@/models/Property";
 
 export enum PROPERTY_TYPE {
   House = "house",
@@ -23,6 +25,11 @@ export enum PROPERTY_PAYMENT_PERIOD {
   Yearly = "yearly",
 }
 
+export enum PROPERTY_STATUS {
+  Free = "free",
+  Sold = "sold",
+}
+
 type MinMaxPair = {
   min: number;
   max: number;
@@ -41,3 +48,5 @@ export type PropertyFilters = {
   rating?: MinMaxPair;
   facilities?: PROPERTY_FACILITY[];
 };
+
+export type PropertyDoc = InferSchemaType<typeof PropertySchema>;
