@@ -16,11 +16,8 @@ export const buildAgreementFiltersSchema = (isArchived: boolean) => {
     ? ARCHIVED_AGREEMENT_STATUSES
     : NON_ARCHIVED_AGREEMENT_STATUSES;
   return yup.object({
-    type: yup
-      .array()
-      .of(yup.string().oneOf(Object.values(AGREEMENT_TYPE)))
-      .default(Object.values(AGREEMENT_TYPE)),
-    status: yup.array().of(yup.string().oneOf(statuses)),
+    type: yup.array().of(yup.string().oneOf(Object.values(AGREEMENT_TYPE))),
+    status: yup.array().of(yup.string().oneOf(Object.values(statuses))),
   });
 };
 

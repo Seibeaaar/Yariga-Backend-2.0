@@ -15,7 +15,7 @@ export const validateAgreementRequestBody = async (
   next: NextFunction,
 ) => {
   try {
-    await AGREEMENT_VALIDATION_SCHEMA.validate(req.body);
+    await AGREEMENT_VALIDATION_SCHEMA.validate(req.query);
     next();
   } catch (e) {
     res.status(400).send(generateErrorMesaage(e));
@@ -28,7 +28,7 @@ export const validateAgreementFilters = async (
   next: NextFunction,
 ) => {
   try {
-    await buildAgreementFiltersSchema(false).validate(req.body);
+    await buildAgreementFiltersSchema(false).validate(req.query);
     next();
   } catch (e) {
     res.status(400).send(generateErrorMesaage(e));

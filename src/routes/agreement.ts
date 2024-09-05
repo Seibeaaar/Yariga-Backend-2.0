@@ -15,13 +15,17 @@ import {
 import Agreement from "@/models/Agreement";
 import Property from "@/models/Property";
 import User from "@/models/User";
-import { AGREEMENT_STATUS } from "@/types/agreement";
+import { AGREEMENT_STATUS, AGREEMENT_TYPE } from "@/types/agreement";
 import { PROPERTY_STATUS } from "@/types/property";
 import { USER_ROLE } from "@/types/user";
 import { generateErrorMesaage, processPageQueryParam } from "@/utils/common";
 import { PAGINATION_LIMIT } from "@/constants/common";
 import { getAgreementUniqueNumber } from "@/utils/agreement";
 import { Router } from "express";
+import {
+  ARCHIVED_AGREEMENT_STATUSES,
+  NON_ARCHIVED_AGREEMENT_STATUSES,
+} from "@/constants/agreement";
 
 const AgreementRouter = Router();
 
@@ -39,19 +43,21 @@ AgreementRouter.get(
 
       const startIndex = (pageNumber - 1) * PAGINATION_LIMIT;
 
-      const query = Agreement.find({
+      const query = {
         [user.role === USER_ROLE.Landlord ? "landlord" : "tenant"]: user.id,
         isArchived: false,
         status: {
-          $in: req.body.status,
+          $in: req.query.status ?? NON_ARCHIVED_AGREEMENT_STATUSES,
         },
         type: {
-          $in: req.body.type,
+          $in: req.query.type ?? Object.values(AGREEMENT_TYPE),
         },
-      });
+      };
 
-      const myAgreements = await query.skip(startIndex).limit(PAGINATION_LIMIT);
-      const total = await query.countDocuments();
+      const myAgreements = await Agreement.find(query)
+        .skip(startIndex)
+        .limit(PAGINATION_LIMIT);
+      const total = await Agreement.find(query).countDocuments();
 
       res.status(200).send({
         results: myAgreements,
@@ -83,10 +89,10 @@ AgreementRouter.get(
         [user.role === USER_ROLE.Landlord ? "landlord" : "tenant"]: user.id,
         isArchived: true,
         status: {
-          $in: req.body.status,
+          $in: req.query.status ?? ARCHIVED_AGREEMENT_STATUSES,
         },
         type: {
-          $in: req.body.type,
+          $in: req.query.type ?? Object.values(AGREEMENT_TYPE),
         },
       });
 
