@@ -1,0 +1,1 @@
+export const MAX_LATEST_NOTIFICATIONS = 5;

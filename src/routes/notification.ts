@@ -1,3 +1,4 @@
+import { MAX_LATEST_NOTIFICATIONS } from "@/constants/notification";
 import { verifyJWToken } from "@/middlewares/common";
 import Notification from "@/models/Notification";
 import { NotificationDocument } from "@/types/notification";
@@ -8,9 +9,12 @@ const NotificationRouter = Router();
 
 NotificationRouter.get("/", verifyJWToken, async (req, res) => {
   try {
+    const { userId } = res.locals;
     const paginatedResponse = await makePaginatedRequest<NotificationDocument>(
       Notification,
-      {},
+      {
+        receiver: userId,
+      },
       req.query.page as string | undefined,
     );
 
@@ -36,6 +40,21 @@ NotificationRouter.put("/read", verifyJWToken, async (req, res) => {
     res
       .status(200)
       .send(`Notifications ${notificationsIds.join(", ")} have been read`);
+  } catch (e) {
+    res.status(500).send(generateErrorMesaage(e));
+  }
+});
+
+NotificationRouter.get("/latest", verifyJWToken, async (req, res) => {
+  try {
+    const { userId } = res.locals;
+    const latestNotifications = await Notification.find({
+      receiver: userId,
+    })
+      .sort({ createdAt: -1 })
+      .limit(MAX_LATEST_NOTIFICATIONS);
+
+    res.status(200).send(latestNotifications);
   } catch (e) {
     res.status(500).send(generateErrorMesaage(e));
   }
