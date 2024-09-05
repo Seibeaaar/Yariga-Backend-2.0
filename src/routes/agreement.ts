@@ -85,7 +85,7 @@ AgreementRouter.get(
 
       const startIndex = (pageNumber - 1) * PAGINATION_LIMIT;
 
-      const query = Agreement.find({
+      const query = {
         [user.role === USER_ROLE.Landlord ? "landlord" : "tenant"]: user.id,
         isArchived: true,
         status: {
@@ -94,10 +94,12 @@ AgreementRouter.get(
         type: {
           $in: req.query.type ?? Object.values(AGREEMENT_TYPE),
         },
-      });
+      };
 
-      const myAgreements = await query.skip(startIndex).limit(PAGINATION_LIMIT);
-      const total = await query.countDocuments();
+      const myAgreements = await Agreement.find(query)
+        .skip(startIndex)
+        .limit(PAGINATION_LIMIT);
+      const total = await Agreement.find(query).countDocuments();
 
       res.status(200).send({
         results: myAgreements,
@@ -117,14 +119,16 @@ AgreementRouter.get("/search", verifyJWToken, async (req, res) => {
     const pageNumber = processPageQueryParam(page as string | undefined);
     const startIndex = (pageNumber - 1) * PAGINATION_LIMIT;
 
-    const query = Agreement.find({
+    const query = {
       uniqueNumber: {
         $regex: new RegExp(q as string, "i"),
       },
-    });
+    };
 
-    const agreements = await query.skip(startIndex).limit(PAGINATION_LIMIT);
-    const total = await query.countDocuments();
+    const agreements = await Agreement.find(query)
+      .skip(startIndex)
+      .limit(PAGINATION_LIMIT);
+    const total = await Agreement.find(query).countDocuments();
 
     res.status(200).send({
       results: agreements,
@@ -191,7 +195,7 @@ AgreementRouter.put(
       await User.findByIdAndUpdate(
         agreement.landlord,
         {
-          $push: {
+          $addToSet: {
             tenants: agreement.tenant,
           },
         },
@@ -247,6 +251,7 @@ AgreementRouter.post(
         ...req.body,
         creator: userId,
         parent: agreement.id,
+        uniqueNumber: getAgreementUniqueNumber(),
       });
 
       await counterAgreement.save();
@@ -276,6 +281,7 @@ AgreementRouter.delete(
   async (req, res) => {
     try {
       const { agreement } = res.locals;
+
       await Agreement.findByIdAndDelete(agreement.id);
       await Agreement.updateMany(
         {

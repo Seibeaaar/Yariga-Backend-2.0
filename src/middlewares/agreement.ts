@@ -15,7 +15,7 @@ export const validateAgreementRequestBody = async (
   next: NextFunction,
 ) => {
   try {
-    await AGREEMENT_VALIDATION_SCHEMA.validate(req.query);
+    await AGREEMENT_VALIDATION_SCHEMA.validate(req.body);
     next();
   } catch (e) {
     res.status(400).send(generateErrorMesaage(e));
@@ -41,7 +41,7 @@ export const validateArchivedAgreementFilters = async (
   next: NextFunction,
 ) => {
   try {
-    await buildAgreementFiltersSchema(true).validate(req.body);
+    await buildAgreementFiltersSchema(true).validate(req.query);
     next();
   } catch (e) {
     res.status(400).send(generateErrorMesaage(e));
@@ -79,7 +79,7 @@ export const validateAgreementEntities = async (
       }
     }
 
-    if (!property.owner.equals(landlord)) {
+    if (!propertyDoc.owner!.equals(landlord)) {
       res.statusCode = 403;
       throw new Error(`Property ${property} is not owned by ${landlord}`);
     }
