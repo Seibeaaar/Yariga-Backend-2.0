@@ -265,7 +265,7 @@ AgreementRouter.delete(
           parent: agreement.id,
         },
         {
-          parent: null,
+          $set: { parent: null },
         },
       );
 

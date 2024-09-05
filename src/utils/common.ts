@@ -26,9 +26,7 @@ export const omitPasswordForUser = (user: Document) => {
   return rest;
 };
 
-export const processPageQueryParam = (
-  pageParam: string | undefined,
-): number => {
+const processPageQueryParam = (pageParam: string | undefined): number => {
   if (!pageParam || Number.isNaN(+pageParam)) {
     return 1;
   }
