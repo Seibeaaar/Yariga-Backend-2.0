@@ -13,6 +13,8 @@ import UserRouter from "./routes/user";
 import PropertyRouter from "./routes/property";
 import AgreementRouter from "./routes/agreement";
 import NotificationRouter from "./routes/notification";
+import MessageRouter from "./routes/message";
+import ChatRouter from "./routes/chats";
 
 const app = express();
 
@@ -33,6 +35,8 @@ app.use("/user", UserRouter);
 app.use("/property", PropertyRouter);
 app.use("/agreement", AgreementRouter);
 app.use("/notification", NotificationRouter);
+app.use("/message", MessageRouter);
+app.use("/chat", ChatRouter);
 
 app.listen(5001, async () => {
   try {
