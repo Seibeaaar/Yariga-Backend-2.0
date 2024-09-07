@@ -14,3 +14,10 @@ export const MESSAGE_REQUIRED_FIELDS = {
 };
 
 export const INITIAL_MESSAGE_VALIDATOR = yup.object(MESSAGE_REQUIRED_FIELDS);
+export const MESSAGE_VALIDATOR = yup.object({
+  ...MESSAGE_REQUIRED_FIELDS,
+  chat: yup
+    .string()
+    .required("Chat required")
+    .test((v: string) => isValidObjectId(v)),
+});

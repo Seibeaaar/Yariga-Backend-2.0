@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import Chat from "@/models/Chat";
 import { generateErrorMesaage } from "@/utils/common";
-import { isValidObjectId } from "mongoose";
 
 export const checkChatIdParam = async (
   req: Request,
@@ -10,11 +9,6 @@ export const checkChatIdParam = async (
 ) => {
   try {
     const { id } = req.params;
-    if (!id || !isValidObjectId(id)) {
-      res.statusCode = 400;
-      throw new Error("Please provide a valid chat id");
-    }
-
     const chat = await Chat.findById(id);
     if (!chat) {
       throw new Error(`Chat with id ${id} not found`);
