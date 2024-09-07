@@ -172,4 +172,27 @@ MessageRouter.put(
   },
 );
 
+MessageRouter.put(
+  "/:id/read",
+  verifyJWToken,
+  checkMessageIdParam,
+  checkIsChatParty,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      await Message.findByIdAndUpdate(
+        id,
+        {
+          isRead: true,
+        },
+        { new: true },
+      );
+
+      res.status(200).send(`Message ${id} is marked as read`);
+    } catch (e) {
+      res.status(500).send(generateErrorMesaage(e));
+    }
+  },
+);
+
 export default MessageRouter;

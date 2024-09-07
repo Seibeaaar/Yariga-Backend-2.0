@@ -29,12 +29,36 @@ ChatRouter.delete(
       const { chat } = res.locals;
       await Chat.findByIdAndDelete(chat.id);
       await Message.deleteMany({
-        _id: {
-          $in: chat.messages,
-        },
+        chat: chat.id,
       });
 
       res.status(200).send(`Chat ${chat.id} was deleted successfully`);
+    } catch (e) {
+      res.status(500).send(generateErrorMesaage(e));
+    }
+  },
+);
+
+ChatRouter.put(
+  "/:id/read",
+  verifyJWToken,
+  checkChatIdParam,
+  checkIsChatParty,
+  async (req, res) => {
+    try {
+      const { userId, chat } = res.locals;
+      await Message.updateMany(
+        {
+          chat: chat.id,
+          isRead: false,
+          receiver: userId,
+        },
+        {
+          $set: { isRead: true },
+        },
+      );
+
+      res.status(200).send("Chat messages are marked as read");
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }
