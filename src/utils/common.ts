@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import { COMMON_SERVER_ERROR } from "@/constants/common";
-import { Document, FilterQuery, Model } from "mongoose";
+import { Document, FilterQuery, Model, Types } from "mongoose";
 import { PAGINATION_LIMIT } from "@/constants/common";
 
 export const generateErrorMesaage = (e: unknown) => {
@@ -56,3 +56,5 @@ export const makePaginatedRequest = async <T>(
     pages: Math.ceil(total / PAGINATION_LIMIT),
   };
 };
+
+export const castToObjectId = (id: string) => new Types.ObjectId(id);

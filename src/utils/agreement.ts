@@ -8,8 +8,8 @@ import {
 } from "@/types/agreement";
 import Agreement from "@/models/Agreement";
 import { USER_ROLE, User } from "@/types/user";
-import { Types } from "mongoose";
 import { AGGREGATE_CONFIG_BY_INTERVAL } from "@/constants/agreement";
+import { castToObjectId } from "./common";
 
 dayjs.extend(week);
 
@@ -98,7 +98,7 @@ const aggregateTotalsByInterval = async (
   user: User,
   intervalUnit: AGREEMENT_TOTAL_INTERVAL,
 ) => {
-  const userId = new Types.ObjectId(user.id);
+  const userId = castToObjectId(user.id);
   const { unit, format } = AGGREGATE_CONFIG_BY_INTERVAL[intervalUnit];
   const result = await Agreement.aggregate([
     {

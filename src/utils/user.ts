@@ -2,6 +2,7 @@ import Agreement from "@/models/Agreement";
 import Property from "@/models/Property";
 import { AGREEMENT_STATUS, AGREEMENT_TYPE } from "@/types/agreement";
 import { UserDocument, User } from "@/types/user";
+import { castToObjectId } from "./common";
 
 export const getUserFullName = (user: UserDocument) =>
   `${user.firstName} ${user.lastName}`;
@@ -18,10 +19,12 @@ export const getLandlordStats = async (user: User) => {
     (property) => property.agreementType === AGREEMENT_TYPE.Sale,
   ).length;
 
+  const userId = castToObjectId(user.id);
+
   const agreementsTotal = await Agreement.aggregate([
     {
       $match: {
-        landlord: user.id,
+        landlord: userId,
         status: AGREEMENT_STATUS.Accepted,
       },
     },
@@ -36,7 +39,7 @@ export const getLandlordStats = async (user: User) => {
   return {
     propertiesForRent,
     propertiesForSale,
-    agreementsTotal,
+    agreementsTotal: agreementsTotal[0].totalAmount ?? 0,
     tenantsCount: user.tenants?.length,
   };
 };
