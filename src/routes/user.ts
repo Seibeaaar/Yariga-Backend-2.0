@@ -11,6 +11,8 @@ import {
 } from "@/middlewares/common";
 import { generateErrorMesaage, omitPasswordForUser } from "@/utils/common";
 import { upload, uploadPhotoToAWS } from "@/utils/media";
+import { USER_ROLE } from "@/types/user";
+import { getLandlordStats, getTenantStats } from "@/utils/user";
 
 const UserRouter = Router();
 
@@ -82,6 +84,25 @@ UserRouter.post(
       );
 
       res.status(200).send(omitPasswordForUser(updatedUser!));
+    } catch (e) {
+      res.status(500).send(generateErrorMesaage(e));
+    }
+  },
+);
+
+UserRouter.get(
+  "/stats",
+  verifyJWToken,
+  fetchUserFromTokenData,
+  async (req, res) => {
+    try {
+      const { user } = res.locals;
+      const stats =
+        user.role === USER_ROLE.Landlord
+          ? await getLandlordStats(user)
+          : await getTenantStats(user);
+
+      res.status(200).send(stats);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }
