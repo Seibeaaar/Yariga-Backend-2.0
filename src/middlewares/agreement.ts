@@ -8,6 +8,7 @@ import User from "@/models/User";
 import Property from "@/models/Property";
 import Agreement from "@/models/Agreement";
 import { isValidObjectId } from "mongoose";
+import { AGREEMENT_TOTAL_INTERVAL } from "@/types/agreement";
 
 export const validateAgreementRequestBody = async (
   req: Request,
@@ -149,5 +150,26 @@ export const checkIsAgreementCounterpart = async (
     next();
   } catch (e) {
     res.status(403).send(generateErrorMesaage(e));
+  }
+};
+
+export const validateGetTotalByIntervalRequest = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const interval = req.query.interval as AGREEMENT_TOTAL_INTERVAL | undefined;
+    if (!interval) {
+      throw new Error("Please provide an interval");
+    }
+
+    if (!Object.values(AGREEMENT_TOTAL_INTERVAL).includes(interval)) {
+      throw new Error(`Invalid interval: ${interval}`);
+    }
+
+    next();
+  } catch (e) {
+    res.status(400).send(generateErrorMesaage(e));
   }
 };

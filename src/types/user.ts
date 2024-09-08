@@ -12,3 +12,6 @@ export enum USER_ROLE {
 }
 
 export type UserDocument = InferSchemaType<typeof UserSchema>;
+export type User = UserDocument & {
+  id: string;
+};
