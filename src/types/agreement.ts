@@ -1,5 +1,6 @@
 import { AgreementSchema } from "@/models/Agreement";
 import { InferSchemaType } from "mongoose";
+import { OpUnitType } from "dayjs";
 
 export enum AGREEMENT_TYPE {
   Sale = "sale",
@@ -13,4 +14,27 @@ export enum AGREEMENT_STATUS {
   Countered = "countered",
 }
 
+export enum AGREEMENT_TOTAL_INTERVAL {
+  Monthly = "monthly",
+  Daily = "daily",
+  Weekly = "weekly",
+  Yearly = "yearly",
+}
+
 export type AgreementDocument = InferSchemaType<typeof AgreementSchema>;
+
+export type TotalByInterval = {
+  [key: number]: number;
+};
+
+export type Interval = {
+  number: number;
+  date: string;
+};
+
+export type IntervalConfig = {
+  [key in AGREEMENT_TOTAL_INTERVAL]: {
+    unit: OpUnitType;
+    format: string;
+  };
+};

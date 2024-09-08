@@ -6,6 +6,7 @@ import {
   validateAgreementFilters,
   validateAgreementRequestBody,
   validateArchivedAgreementFilters,
+  validateGetTotalByIntervalRequest,
 } from "@/middlewares/agreement";
 import {
   checkIfTenant,
@@ -17,18 +18,25 @@ import Property from "@/models/Property";
 import User from "@/models/User";
 import {
   AGREEMENT_STATUS,
+  AGREEMENT_TOTAL_INTERVAL,
   AGREEMENT_TYPE,
   AgreementDocument,
 } from "@/types/agreement";
 import { PROPERTY_STATUS } from "@/types/property";
 import { USER_ROLE } from "@/types/user";
 import { generateErrorMesaage, makePaginatedRequest } from "@/utils/common";
-import { getAgreementUniqueNumber } from "@/utils/agreement";
+import {
+  calculateTotalByMonth,
+  calculateTotalByWeeks,
+  calculateTotalByYears,
+  getAgreementUniqueNumber,
+} from "@/utils/agreement";
 import { Router } from "express";
 import {
   ARCHIVED_AGREEMENT_STATUSES,
   NON_ARCHIVED_AGREEMENT_STATUSES,
 } from "@/constants/agreement";
+import { calculateTotalByDays } from "@/utils/agreement";
 
 const AgreementRouter = Router();
 
@@ -295,6 +303,34 @@ AgreementRouter.put(
       });
 
       res.status(200).send(updatedAgreement);
+    } catch (e) {
+      res.status(500).send(generateErrorMesaage(e));
+    }
+  },
+);
+
+AgreementRouter.get(
+  "/totalByInterval",
+  verifyJWToken,
+  fetchUserFromTokenData,
+  validateGetTotalByIntervalRequest,
+  async (req, res) => {
+    try {
+      const { interval } = req.query;
+      const { user } = res.locals;
+
+      const calculateFunctions = {
+        [AGREEMENT_TOTAL_INTERVAL.Daily]: calculateTotalByDays,
+        [AGREEMENT_TOTAL_INTERVAL.Weekly]: calculateTotalByWeeks,
+        [AGREEMENT_TOTAL_INTERVAL.Monthly]: calculateTotalByMonth,
+        [AGREEMENT_TOTAL_INTERVAL.Yearly]: calculateTotalByYears,
+      };
+
+      const calculator =
+        calculateFunctions[interval as AGREEMENT_TOTAL_INTERVAL];
+      const totalByIntervals = await calculator(user);
+
+      res.status(200).send(totalByIntervals);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }
