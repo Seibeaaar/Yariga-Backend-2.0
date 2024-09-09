@@ -20,7 +20,6 @@ import {
   AGREEMENT_STATUS,
   AGREEMENT_TOTAL_INTERVAL,
   AGREEMENT_TYPE,
-  AgreementDocument,
 } from "@/types/agreement";
 import { PROPERTY_STATUS } from "@/types/property";
 import { USER_ROLE } from "@/types/user";
@@ -59,7 +58,7 @@ AgreementRouter.get(
         },
       };
 
-      const paginatedResponse = await makePaginatedRequest<AgreementDocument>(
+      const paginatedResponse = await makePaginatedRequest(
         Agreement,
         query,
         req.query.page as string | undefined,
