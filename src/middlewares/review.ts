@@ -4,6 +4,7 @@ import { generateErrorMesaage } from "@/utils/common";
 import User from "@/models/User";
 import Property from "@/models/Property";
 import { REVIEW_OBJECT } from "@/types/review";
+import Review from "@/models/Review";
 
 export const validateReviewRequestBody = async (
   req: Request,
@@ -36,5 +37,40 @@ export const validateReviewedObject = async (
     next();
   } catch (e) {
     res.status(404).send(generateErrorMesaage(e));
+  }
+};
+
+export const checkReviewIdParam = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { id } = req.params;
+    const review = await Review.findById(id);
+    if (!review) {
+      throw new Error(`No review with id ${id} found`);
+    }
+    res.locals.review = review;
+    next();
+  } catch (e) {
+    res.status(404).send(generateErrorMesaage(e));
+  }
+};
+
+export const checkIsReviewer = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { userId, review } = res.locals;
+    if (!review.reviewer.equals(userId)) {
+      throw new Error("Only a reviewe can perform such operation");
+    }
+
+    next();
+  } catch (e) {
+    res.status(403).send(generateErrorMesaage(e));
   }
 };

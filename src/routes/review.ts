@@ -1,14 +1,15 @@
 import { Router } from "express";
 import { verifyJWToken } from "@/middlewares/common";
 import {
+  checkIsReviewer,
+  checkReviewIdParam,
   validateReviewRequestBody,
   validateReviewedObject,
 } from "@/middlewares/review";
 import { generateErrorMesaage, makePaginatedRequest } from "@/utils/common";
 import Review from "@/models/Review";
-import { REVIEW_OBJECT } from "@/types/review";
-import User from "@/models/User";
-import Property from "@/models/Property";
+import { RATING_UPDATE } from "@/types/review";
+import { updateRevieweeRating } from "@/utils/review";
 
 const ReviewRouter = Router();
 
@@ -25,28 +26,13 @@ ReviewRouter.post(
         reviewer: userId,
       });
 
-      const { rating } = req.body;
-      const updateRatingQuery = {
-        $inc: { votes: 1 },
-        $set: {
-          rating: {
-            $divide: [
-              { $add: [{ $multiply: ["$rating", "$votes"] }, rating] },
-              { $add: ["$votes", 1] },
-            ],
-          },
-        },
-      };
-
-      if (req.body.object === REVIEW_OBJECT.User) {
-        await User.findByIdAndUpdate(req.body.reviewee, updateRatingQuery, {
-          new: true,
-        });
-      } else {
-        await Property.findByIdAndUpdate(req.body.reviewee, updateRatingQuery, {
-          new: true,
-        });
-      }
+      const { rating, reviewee, object } = req.body;
+      await updateRevieweeRating(
+        reviewee,
+        object,
+        rating,
+        RATING_UPDATE.Increase,
+      );
 
       await review.save();
       res.status(201).send(review);
@@ -91,5 +77,62 @@ ReviewRouter.get("/sent", verifyJWToken, async (req, res) => {
     res.status(500).send(generateErrorMesaage(e));
   }
 });
+
+ReviewRouter.put(
+  "/:id/update",
+  verifyJWToken,
+  checkReviewIdParam,
+  checkIsReviewer,
+  validateReviewRequestBody,
+  validateReviewedObject,
+  async (req, res) => {
+    try {
+      const updatedReview = await Review.findByIdAndUpdate(
+        req.params.id,
+        {
+          ...req.body,
+          updatedAt: new Date().toISOString(),
+        },
+        { new: true },
+      );
+
+      const { rating, reviewee, object } = req.body;
+      await updateRevieweeRating(
+        reviewee,
+        object,
+        rating,
+        RATING_UPDATE.Recalculate,
+      );
+
+      res.status(200).send(updatedReview);
+    } catch (e) {
+      res.status(500).send(generateErrorMesaage(e));
+    }
+  },
+);
+
+ReviewRouter.delete(
+  "/:id",
+  verifyJWToken,
+  checkReviewIdParam,
+  checkIsReviewer,
+  async (req, res) => {
+    try {
+      const {
+        review: { id, reviewee, object, rating },
+      } = res.locals;
+
+      await Review.findByIdAndDelete(id);
+      await updateRevieweeRating(
+        reviewee,
+        object,
+        rating,
+        RATING_UPDATE.Decrease,
+      );
+    } catch (e) {
+      res.status(500).send(generateErrorMesaage(e));
+    }
+  },
+);
 
 export default ReviewRouter;

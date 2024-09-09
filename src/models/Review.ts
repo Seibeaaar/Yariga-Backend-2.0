@@ -38,6 +38,10 @@ export const ReviewSchema = new Schema({
       values: Object.values(REVIEW_OBJECT),
     },
   },
+  updatedAt: {
+    type: String,
+    default: null,
+  },
 });
 
 export default model("Review", ReviewSchema);
