@@ -129,6 +129,8 @@ ReviewRouter.delete(
         rating,
         RATING_UPDATE.Decrease,
       );
+
+      res.status(200).send(`Review with id ${id} was deleted successfully`);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }

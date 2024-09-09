@@ -6,8 +6,8 @@ const buildRatingUpdateQuery = (rating: number, update: RATING_UPDATE) => {
   switch (update) {
     case RATING_UPDATE.Decrease:
       return {
-        $inc: { votes: -1 },
         $set: {
+          votes: { $subtract: ["$votes", 1] },
           rating: {
             $cond: {
               if: { $eq: ["$votes", 1] },
@@ -26,15 +26,18 @@ const buildRatingUpdateQuery = (rating: number, update: RATING_UPDATE) => {
       return {
         $set: {
           rating: {
-            $divide: [{ $add: [{ $multiply: ["$rating", "$votes"] }, rating] }],
+            $divide: [
+              { $add: [{ $multiply: ["$rating", "$votes"] }, rating] },
+              { $add: ["$votes", 1] },
+            ],
           },
         },
       };
 
     case RATING_UPDATE.Increase:
       return {
-        $inc: { votes: 1 },
         $set: {
+          votes: { $add: ["$votes", 1] },
           rating: {
             $divide: [
               { $add: [{ $multiply: ["$rating", "$votes"] }, rating] },
@@ -54,12 +57,18 @@ export const updateRevieweeRating = async (
 ) => {
   const query = buildRatingUpdateQuery(rating, update);
   if (object === REVIEW_OBJECT.User) {
-    await User.findByIdAndUpdate(reviewee, query, {
-      new: true,
-    });
+    await User.updateOne(
+      {
+        _id: reviewee,
+      },
+      [query],
+    );
   } else {
-    await Property.findByIdAndUpdate(reviewee, query, {
-      new: true,
-    });
+    await Property.updateOne(
+      {
+        _id: reviewee,
+      },
+      [query],
+    );
   }
 };
