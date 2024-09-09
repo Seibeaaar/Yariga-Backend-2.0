@@ -187,7 +187,7 @@ PropertyRouter.get(
       const { user } = res.locals;
       const query = buildPropertyFiltersQuery(user.preferences || {});
 
-      const paginatedResponse = await makePaginatedRequest<PropertyDoc>(
+      const paginatedResponse = await makePaginatedRequest(
         Property,
         query,
         req.query.page as string | undefined,

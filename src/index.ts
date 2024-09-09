@@ -15,6 +15,7 @@ import AgreementRouter from "./routes/agreement";
 import NotificationRouter from "./routes/notification";
 import MessageRouter from "./routes/message";
 import ChatRouter from "./routes/chats";
+import ReviewRouter from "./routes/review";
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use("/agreement", AgreementRouter);
 app.use("/notification", NotificationRouter);
 app.use("/message", MessageRouter);
 app.use("/chat", ChatRouter);
+app.use("/review", ReviewRouter);
 
 app.listen(5001, async () => {
   try {

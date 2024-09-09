@@ -7,7 +7,6 @@ import { generateErrorMesaage } from "@/utils/common";
 import User from "@/models/User";
 import Property from "@/models/Property";
 import Agreement from "@/models/Agreement";
-import { isValidObjectId } from "mongoose";
 import { AGREEMENT_TOTAL_INTERVAL } from "@/types/agreement";
 
 export const validateAgreementRequestBody = async (
@@ -98,22 +97,16 @@ export const checkAgreementIdParam = async (
 ) => {
   try {
     const { id } = req.params;
-    if (!isValidObjectId(id)) {
-      res.statusCode = 400;
-      throw new Error("Invalid agreement id");
-    }
-
     const agreement = await Agreement.findById(id);
 
     if (!agreement) {
-      res.statusCode = 404;
       throw new Error(`No agreement with id ${id} found`);
     }
 
     res.locals.agreement = agreement;
     next();
   } catch (e) {
-    res.send(generateErrorMesaage(e));
+    res.status(404).send(generateErrorMesaage(e));
   }
 };
 
