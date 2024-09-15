@@ -1,3 +1,4 @@
+import { UserDocument } from "@/types/user";
 import passport, { Profile } from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 
@@ -22,3 +23,12 @@ passport.serializeUser(function (user, done) {
 passport.deserializeUser(function (user, done) {
   done(null, user as Profile);
 });
+
+export const buildGoogleRedirectURL = (
+  token: string,
+  user: UserDocument,
+): string => {
+  return `http://localhost:5173/auth/success?token=${token}&user=${encodeURIComponent(
+    JSON.stringify(user),
+  )}`;
+};

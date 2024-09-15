@@ -15,6 +15,7 @@ export enum PROPERTY_FACILITY {
   Pets = "pets",
   Kitchen = "kitched",
   Pool = "pool",
+  Bathroom = "bathroom",
 }
 
 export enum PROPERTY_PAYMENT_PERIOD {

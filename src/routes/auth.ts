@@ -14,6 +14,7 @@ import { signJWT } from "@/utils/common";
 import { AUTH_PROVIDER } from "@/types/user";
 import { PASSWORD_HASHING_ROUNDS } from "@/constants/auth";
 import "@/utils/auth";
+import { buildGoogleRedirectURL } from "@/utils/auth";
 
 const AuthRouter = Router();
 
@@ -103,17 +104,13 @@ AuthRouter.get(
         });
 
         await user.save();
+        const token = signJWT(user.id);
 
-        return res.status(201).send({
-          user,
-          token: signJWT(user.id),
-        });
+        return res.redirect(buildGoogleRedirectURL(token, user));
       }
 
-      return res.status(200).send({
-        user: existingUser,
-        token: signJWT(existingUser.id),
-      });
+      const token = signJWT(existingUser.id);
+      return res.redirect(buildGoogleRedirectURL(token, existingUser));
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }

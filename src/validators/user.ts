@@ -2,7 +2,8 @@ import * as yup from "yup";
 import dayjs from "dayjs";
 import { USER_ROLE } from "@/types/user";
 
-const US_PHONE_NUMBER_REGEX = /^(\([0-9]{3}\) |[0-9]{3}-)[0-9]{3}-[0-9]{4}$/;
+const US_PHONE_NUMBER_REGEX =
+  /^(\+1\s?)?(\([0-9]{3}\)\s?|[0-9]{3}-)[0-9]{3}-[0-9]{4}$/;
 
 export const USER_COMPLETE_SCHEMA = yup.object({
   dateOfBirth: yup
