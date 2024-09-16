@@ -2,8 +2,9 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import express from "express";
-import helemt from "helmet";
+import helmet from "helmet";
 import mongoose from "mongoose";
+import cors from "cors";
 import session from "express-session";
 import passport from "passport";
 import { MONGO_DB_CONNECT_URI } from "./constants/database";
@@ -29,7 +30,12 @@ app.use(
 );
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(helemt());
+app.use(helmet());
+app.use(
+  cors({
+    origin: "*",
+  }),
+);
 
 app.use("/auth", AuthRouter);
 app.use("/user", UserRouter);
