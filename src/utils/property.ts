@@ -15,11 +15,17 @@ import {
 } from "@/constants/property";
 import { AGREEMENT_TYPE } from "@/types/agreement";
 import {
+  PROPERTY_FACILITY,
   PROPERTY_PAYMENT_PERIOD,
   PROPERTY_TYPE,
   PropertyFilters,
 } from "@/types/property";
 import { FilterQuery } from "mongoose";
+
+const selectArrayFilters = <T>(arr: T[], fallback: T[]) => {
+  if (arr.length > 0) return arr;
+  return fallback;
+};
 
 export const buildPropertyFiltersQuery = (
   filters: PropertyFilters,
@@ -54,18 +60,28 @@ export const buildPropertyFiltersQuery = (
       $lte: filters.area?.max || MAX_AREA,
     },
     agreementType: {
-      $in: filters.agreementType ?? Object.values(AGREEMENT_TYPE),
+      $in: selectArrayFilters(
+        filters.agreementType,
+        Object.values(AGREEMENT_TYPE),
+      ),
     },
     type: {
-      $in: filters.propertyType ?? Object.values(PROPERTY_TYPE),
+      $in: selectArrayFilters(
+        filters.propertyType,
+        Object.values(PROPERTY_TYPE),
+      ),
     },
     paymentPeriod: {
-      $in: filters.paymentPeriod ?? Object.values(PROPERTY_PAYMENT_PERIOD),
+      $in: selectArrayFilters(
+        filters.paymentPeriod,
+        Object.values(PROPERTY_PAYMENT_PERIOD),
+      ),
     },
-    ...(filters.facilities && {
-      facilities: {
-        $in: filters.facilities,
-      },
-    }),
+    facilities: {
+      $in: selectArrayFilters(
+        filters.facilities,
+        Object.values(PROPERTY_FACILITY),
+      ),
+    },
   };
 };
