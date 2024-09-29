@@ -32,8 +32,8 @@ export enum PROPERTY_STATUS {
 }
 
 type MinMaxPair = {
-  min: number;
-  max: number;
+  min?: number;
+  max?: number;
 };
 
 export type PropertyFilters = {
@@ -43,11 +43,11 @@ export type PropertyFilters = {
   floorLevel?: MinMaxPair;
   area?: MinMaxPair;
   amount?: MinMaxPair;
-  agreementType?: AGREEMENT_TYPE[];
-  paymentPeriod?: PROPERTY_PAYMENT_PERIOD[];
-  propertyType?: PROPERTY_TYPE[];
+  agreementType: AGREEMENT_TYPE[];
+  paymentPeriod: PROPERTY_PAYMENT_PERIOD[];
+  propertyType: PROPERTY_TYPE[];
   rating?: MinMaxPair;
-  facilities?: PROPERTY_FACILITY[];
+  facilities: PROPERTY_FACILITY[];
 };
 
 export type PropertyDoc = InferSchemaType<typeof PropertySchema>;
