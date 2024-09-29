@@ -8,7 +8,13 @@ import {
 } from "@/types/agreement";
 import Agreement from "@/models/Agreement";
 import { USER_ROLE, User } from "@/types/user";
-import { AGGREGATE_CONFIG_BY_INTERVAL } from "@/constants/agreement";
+import {
+  AGGREGATE_CONFIG_BY_INTERVAL,
+  DAY_STATS_THRESHOLD,
+  MONTH_STATS_THRESHOLD,
+  WEEK_STATS_THRESHOLD,
+  YEAR_STATS_THRESHOLD,
+} from "@/constants/agreement";
 import { castToObjectId } from "./common";
 
 dayjs.extend(week);
@@ -19,10 +25,13 @@ export const getAgreementUniqueNumber = () => {
 
 export const calculateTotalByMonth = async (user: User) => {
   const currentMonth = dayjs().endOf("month");
-  const months = Array.from({ length: 6 }).map((_, i) => {
-    const month = currentMonth.subtract(i, "months");
+  const months = Array.from({ length: MONTH_STATS_THRESHOLD }).map((_, i) => {
+    const month = currentMonth.subtract(
+      MONTH_STATS_THRESHOLD - (i + 1),
+      "months",
+    );
     return {
-      number: month.month() + 1,
+      number: month.month(),
       date: month.format("YYYY-MM"),
     };
   });
@@ -38,10 +47,10 @@ export const calculateTotalByMonth = async (user: User) => {
 
 export const calculateTotalByDays = async (user: User) => {
   const currentDay = dayjs().endOf("day");
-  const days = Array.from({ length: 7 }).map((_, i) => {
-    const day = currentDay.subtract(i, "days");
+  const days = Array.from({ length: DAY_STATS_THRESHOLD }).map((_, i) => {
+    const day = currentDay.subtract(DAY_STATS_THRESHOLD - (i + 1), "days");
     return {
-      number: day.day() + 1,
+      number: day.day(),
       date: day.format("YYYY-MM-DD"),
     };
   });
@@ -57,10 +66,10 @@ export const calculateTotalByDays = async (user: User) => {
 
 export const calculateTotalByWeeks = async (user: User) => {
   const currentWeek = dayjs().endOf("week");
-  const weeks = Array.from({ length: 5 }).map((_, i) => {
-    const week = currentWeek.subtract(i, "weeks");
+  const weeks = Array.from({ length: WEEK_STATS_THRESHOLD }).map((_, i) => {
+    const week = currentWeek.subtract(WEEK_STATS_THRESHOLD - (i + 1), "weeks");
     return {
-      number: week.week() + 1,
+      number: week.week(),
       date: week.format("YYYY-MM-DD"),
     };
   });
@@ -76,8 +85,8 @@ export const calculateTotalByWeeks = async (user: User) => {
 
 export const calculateTotalByYears = async (user: User) => {
   const currentYear = dayjs().endOf("year");
-  const years = Array.from({ length: 5 }).map((_, i) => {
-    const year = currentYear.subtract(i, "years");
+  const years = Array.from({ length: YEAR_STATS_THRESHOLD }).map((_, i) => {
+    const year = currentYear.subtract(YEAR_STATS_THRESHOLD - (i + 1), "years");
     return {
       number: year.year(),
       date: year.format("YYYY"),
@@ -93,6 +102,22 @@ export const calculateTotalByYears = async (user: User) => {
   return totalByYears;
 };
 
+const getNameByIntervalUnit = (
+  unit: AGREEMENT_TOTAL_INTERVAL,
+  value: number,
+) => {
+  switch (unit) {
+    case AGREEMENT_TOTAL_INTERVAL.Daily:
+      return dayjs().day(value).format("dddd");
+    case AGREEMENT_TOTAL_INTERVAL.Monthly:
+      return dayjs().month(value).format("MMMM");
+    case AGREEMENT_TOTAL_INTERVAL.Weekly:
+      return `Week ${value + 1}`;
+    default:
+      return value.toString();
+  }
+};
+
 const aggregateTotalsByInterval = async (
   intervals: Interval[],
   user: User,
@@ -106,10 +131,10 @@ const aggregateTotalsByInterval = async (
         [user.role === USER_ROLE.Landlord ? "landlord" : "tenant"]: userId,
         status: AGREEMENT_STATUS.Accepted,
         startDate: {
-          $gte: dayjs(intervals[intervals.length - 1].date)
-            .startOf(unit)
+          $gte: dayjs(intervals[0].date).startOf(unit).toISOString(),
+          $lte: dayjs(intervals[intervals.length - 1].date)
+            .endOf(unit)
             .toISOString(),
-          $lte: dayjs(intervals[0].date).endOf(unit).toISOString(),
         },
       },
     },
@@ -131,14 +156,14 @@ const aggregateTotalsByInterval = async (
     },
   ]);
 
-  const totalByIntervals = intervals.reduce(
-    (acc: TotalByInterval, { number, date }) => {
-      const found = result.find((r) => r._id === date);
-      acc[number] = found ? found.totalAmount : 0;
-      return acc;
-    },
-    {},
-  );
-
-  return totalByIntervals;
+  return intervals.reduce((acc: TotalByInterval[], { number, date }) => {
+    const periodInfo = result.find((r) => r._id === date);
+    const totalValue = periodInfo ? periodInfo.totalAmount : 0;
+    const periodName = getNameByIntervalUnit(intervalUnit, number);
+    acc.push({
+      name: periodName,
+      value: totalValue,
+    });
+    return acc;
+  }, []);
 };

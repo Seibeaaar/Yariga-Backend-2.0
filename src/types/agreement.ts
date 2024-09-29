@@ -24,7 +24,8 @@ export enum AGREEMENT_TOTAL_INTERVAL {
 export type AgreementDocument = InferSchemaType<typeof AgreementSchema>;
 
 export type TotalByInterval = {
-  [key: number]: number;
+  name: string;
+  value: number;
 };
 
 export type Interval = {

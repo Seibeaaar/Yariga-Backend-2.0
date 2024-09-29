@@ -34,3 +34,8 @@ export const AGGREGATE_CONFIG_BY_INTERVAL: IntervalConfig = {
     format: "%Y",
   },
 };
+
+export const MONTH_STATS_THRESHOLD = 6;
+export const DAY_STATS_THRESHOLD = 7;
+export const WEEK_STATS_THRESHOLD = 5;
+export const YEAR_STATS_THRESHOLD = 5;
