@@ -104,17 +104,18 @@ export const calculateTotalByYears = async (user: User) => {
 
 const getNameByIntervalUnit = (
   unit: AGREEMENT_TOTAL_INTERVAL,
-  value: number,
+  date: string,
 ) => {
+  const dateObject = dayjs(date);
   switch (unit) {
     case AGREEMENT_TOTAL_INTERVAL.Daily:
-      return dayjs().day(value).format("dddd");
+      return dateObject.format("DD.MM");
     case AGREEMENT_TOTAL_INTERVAL.Monthly:
-      return dayjs().month(value).format("MMMM");
+      return dateObject.format("MMM");
     case AGREEMENT_TOTAL_INTERVAL.Weekly:
-      return `Week ${value + 1}`;
+      return `Week ${dateObject.week()}`;
     default:
-      return value.toString();
+      return dateObject.format("YYYY");
   }
 };
 
@@ -156,10 +157,11 @@ const aggregateTotalsByInterval = async (
     },
   ]);
 
-  return intervals.reduce((acc: TotalByInterval[], { number, date }) => {
+  return intervals.reduce((acc: TotalByInterval[], interval) => {
+    const { date } = interval;
     const periodInfo = result.find((r) => r._id === date);
     const totalValue = periodInfo ? periodInfo.totalAmount : 0;
-    const periodName = getNameByIntervalUnit(intervalUnit, number);
+    const periodName = getNameByIntervalUnit(intervalUnit, date);
     acc.push({
       name: periodName,
       value: totalValue,
