@@ -35,6 +35,29 @@ PropertyRouter.get("/", verifyJWToken, async (req, res) => {
   }
 });
 
+PropertyRouter.get(
+  "/mine",
+  verifyJWToken,
+  fetchUserFromTokenData,
+  checkIfLandlord,
+  async (req, res) => {
+    try {
+      const { userId } = res.locals;
+      const paginatedResponse = await makePaginatedRequest<PropertyDoc>(
+        Property,
+        {
+          owner: userId,
+        },
+        req.query.page as string | undefined,
+      );
+
+      res.status(200).send(paginatedResponse);
+    } catch (e) {
+      res.status(500).send(generateErrorMesaage(e));
+    }
+  },
+);
+
 PropertyRouter.get("/search", verifyJWToken, async (req, res) => {
   try {
     const { q = "", page } = req.query;
