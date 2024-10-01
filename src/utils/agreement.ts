@@ -3,7 +3,6 @@ import week from "dayjs/plugin/weekOfYear";
 import {
   AGREEMENT_STATUS,
   AGREEMENT_TOTAL_INTERVAL,
-  Interval,
   TotalByInterval,
 } from "@/types/agreement";
 import Agreement from "@/models/Agreement";
@@ -30,10 +29,7 @@ export const calculateTotalByMonth = async (user: User) => {
       MONTH_STATS_THRESHOLD - (i + 1),
       "months",
     );
-    return {
-      number: month.month(),
-      date: month.format("YYYY-MM"),
-    };
+    return month.format("YYYY-MM");
   });
 
   const totalByMonths = await aggregateTotalsByInterval(
@@ -49,10 +45,7 @@ export const calculateTotalByDays = async (user: User) => {
   const currentDay = dayjs().endOf("day");
   const days = Array.from({ length: DAY_STATS_THRESHOLD }).map((_, i) => {
     const day = currentDay.subtract(DAY_STATS_THRESHOLD - (i + 1), "days");
-    return {
-      number: day.day(),
-      date: day.format("YYYY-MM-DD"),
-    };
+    return day.format("YYYY-MM-DD");
   });
 
   const totalByDays = await aggregateTotalsByInterval(
@@ -68,10 +61,7 @@ export const calculateTotalByWeeks = async (user: User) => {
   const currentWeek = dayjs().endOf("week");
   const weeks = Array.from({ length: WEEK_STATS_THRESHOLD }).map((_, i) => {
     const week = currentWeek.subtract(WEEK_STATS_THRESHOLD - (i + 1), "weeks");
-    return {
-      number: week.week(),
-      date: week.format("YYYY-MM-DD"),
-    };
+    return week.format("YYYY-MM-DD");
   });
 
   const totalByWeeks = await aggregateTotalsByInterval(
@@ -87,10 +77,7 @@ export const calculateTotalByYears = async (user: User) => {
   const currentYear = dayjs().endOf("year");
   const years = Array.from({ length: YEAR_STATS_THRESHOLD }).map((_, i) => {
     const year = currentYear.subtract(YEAR_STATS_THRESHOLD - (i + 1), "years");
-    return {
-      number: year.year(),
-      date: year.format("YYYY"),
-    };
+    return year.format("YYYY");
   });
 
   const totalByYears = await aggregateTotalsByInterval(
@@ -120,7 +107,7 @@ const getNameByIntervalUnit = (
 };
 
 const aggregateTotalsByInterval = async (
-  intervals: Interval[],
+  dates: string[],
   user: User,
   intervalUnit: AGREEMENT_TOTAL_INTERVAL,
 ) => {
@@ -132,8 +119,8 @@ const aggregateTotalsByInterval = async (
         [user.role === USER_ROLE.Landlord ? "landlord" : "tenant"]: userId,
         status: AGREEMENT_STATUS.Accepted,
         startDate: {
-          $gte: dayjs(intervals[0].date).startOf(unit).toISOString(),
-          $lte: dayjs(intervals[intervals.length - 1].date)
+          $gte: dayjs(dates[0]).startOf(unit).toISOString(),
+          $lte: dayjs(dates[dates.length - 1])
             .endOf(unit)
             .toISOString(),
         },
@@ -157,8 +144,7 @@ const aggregateTotalsByInterval = async (
     },
   ]);
 
-  return intervals.reduce((acc: TotalByInterval[], interval) => {
-    const { date } = interval;
+  return dates.reduce((acc: TotalByInterval[], date) => {
     const periodInfo = result.find((r) => r._id === date);
     const totalValue = periodInfo ? periodInfo.totalAmount : 0;
     const periodName = getNameByIntervalUnit(intervalUnit, date);
