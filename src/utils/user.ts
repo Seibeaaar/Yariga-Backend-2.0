@@ -21,7 +21,7 @@ export const getLandlordStats = async (user: User) => {
 
   const userId = castToObjectId(user.id);
 
-  const agreementsTotal = await Agreement.aggregate([
+  const agreements = await Agreement.aggregate([
     {
       $match: {
         landlord: userId,
@@ -31,7 +31,8 @@ export const getLandlordStats = async (user: User) => {
     {
       $group: {
         _id: null,
-        totalAmount: { $sum: "$amount" },
+        total: { $sum: "$amount" },
+        count: { $sum: 1 },
       },
     },
   ]);
@@ -39,8 +40,9 @@ export const getLandlordStats = async (user: User) => {
   return {
     propertiesForRent,
     propertiesForSale,
-    agreementsTotal: agreementsTotal[0].totalAmount ?? 0,
+    agreementsTotal: agreements[0].total ?? 0,
     tenantsCount: user.tenants?.length,
+    agreementsCount: agreements[0].count ?? 0,
   };
 };
 
@@ -65,6 +67,6 @@ export const getTenantStats = async (user: User) => {
     propertiesRented,
     propertiesPurchased,
     agreementsTotal,
-    joinedAt: user.joinedAt,
+    agreementsCount: agreements.length,
   };
 };

@@ -160,6 +160,7 @@ AgreementRouter.put(
         agreement.id,
         {
           status: AGREEMENT_STATUS.Accepted,
+          updatedAt: new Date().toISOString(),
         },
         {
           new: true,
@@ -208,6 +209,7 @@ AgreementRouter.put(
         {
           status: AGREEMENT_STATUS.Declined,
           isArchived: true,
+          updatedAt: new Date().toISOString(),
         },
         {
           new: true,
@@ -309,7 +311,7 @@ AgreementRouter.put(
 );
 
 AgreementRouter.get(
-  "/totalByInterval",
+  "/total",
   verifyJWToken,
   fetchUserFromTokenData,
   validateGetTotalByIntervalRequest,
@@ -330,6 +332,30 @@ AgreementRouter.get(
       const totalByIntervals = await calculator(user);
 
       res.status(200).send(totalByIntervals);
+    } catch (e) {
+      res.status(500).send(generateErrorMesaage(e));
+    }
+  },
+);
+
+AgreementRouter.get(
+  "/latest",
+  verifyJWToken,
+  fetchUserFromTokenData,
+  async (req, res) => {
+    try {
+      const { user } = res.locals;
+      const latestAgreements = await Agreement.find({
+        [user.role === USER_ROLE.Landlord ? "landlord" : "tenant"]: user.id,
+        status: AGREEMENT_STATUS.Accepted,
+      })
+        .sort({
+          updatedAt: -1,
+        })
+        .populate("property")
+        .limit(5);
+
+      res.status(200).send(latestAgreements);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }

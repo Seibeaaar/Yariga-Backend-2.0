@@ -28,11 +28,6 @@ export type TotalByInterval = {
   value: number;
 };
 
-export type Interval = {
-  number: number;
-  date: string;
-};
-
 export type IntervalConfig = {
   [key in AGREEMENT_TOTAL_INTERVAL]: {
     unit: OpUnitType;
