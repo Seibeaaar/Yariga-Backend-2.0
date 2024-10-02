@@ -15,7 +15,6 @@ import {
 } from "@/constants/property";
 import { AGREEMENT_TYPE } from "@/types/agreement";
 import {
-  PROPERTY_FACILITY,
   PROPERTY_PAYMENT_PERIOD,
   PROPERTY_TYPE,
   PropertyFilters,
@@ -77,11 +76,10 @@ export const buildPropertyFiltersQuery = (
         Object.values(PROPERTY_PAYMENT_PERIOD),
       ),
     },
-    facilities: {
-      $in: selectArrayFilters(
-        filters.facilities,
-        Object.values(PROPERTY_FACILITY),
-      ),
-    },
+    ...(filters.facilities.length > 0 && {
+      facilities: {
+        $in: filters.facilities,
+      },
+    }),
   };
 };
