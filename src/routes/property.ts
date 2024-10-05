@@ -9,6 +9,7 @@ import {
 } from "@/middlewares/common";
 import {
   checkPropertyByIdParam,
+  checkPropertyNumberLimit,
   checkPropertyOwnership,
   validatePropertyRequestBody,
 } from "@/middlewares/property";
@@ -43,15 +44,11 @@ PropertyRouter.get(
   async (req, res) => {
     try {
       const { userId } = res.locals;
-      const paginatedResponse = await makePaginatedRequest<PropertyDoc>(
-        Property,
-        {
-          owner: userId,
-        },
-        req.query.page as string | undefined,
-      );
+      const myProperties = await Property.find({
+        owner: userId,
+      });
 
-      res.status(200).send(paginatedResponse);
+      res.status(200).send(myProperties);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }
@@ -109,6 +106,7 @@ PropertyRouter.post(
   verifyJWToken,
   fetchUserFromTokenData,
   checkIfLandlord,
+  checkPropertyNumberLimit,
   upload.array("photos"),
   validatePropertyRequestBody,
   async (req, res) => {

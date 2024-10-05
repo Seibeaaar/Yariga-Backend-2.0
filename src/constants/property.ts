@@ -25,3 +25,5 @@ export const MIN_LONGITUDE = -180;
 export const MAX_LONGITUDE = 180;
 
 export const MIN_DESCRPTION_CHARS = 100;
+
+export const MAX_PROPERTY_NUMBER = 25;
