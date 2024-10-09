@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { generateErrorMesaage } from "@/utils/common";
 import { PROPERTY_DATA_VALIDATION_SCHEMA } from "@/validators/property";
 import Property from "@/models/Property";
+import { MAX_PROPERTY_NUMBER } from "@/constants/property";
 
 export const validatePropertyRequestBody = async (
   req: Request,
@@ -50,5 +51,28 @@ export const checkPropertyOwnership = async (
     next();
   } catch (e) {
     res.status(403).send(generateErrorMesaage(e));
+  }
+};
+
+export const checkPropertyNumberLimit = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { userId } = res.locals;
+    const userPropertiesCount = await Property.find({
+      owner: userId,
+    }).countDocuments();
+
+    if (userPropertiesCount === MAX_PROPERTY_NUMBER) {
+      throw new Error(
+        `You cannot exceed the limit of ${MAX_PROPERTY_NUMBER} propeerties in your ownership`,
+      );
+    }
+
+    next();
+  } catch (e) {
+    res.status(400).send(generateErrorMesaage(e));
   }
 };

@@ -9,6 +9,7 @@ import {
 } from "@/middlewares/common";
 import {
   checkPropertyByIdParam,
+  checkPropertyNumberLimit,
   checkPropertyOwnership,
   validatePropertyRequestBody,
 } from "@/middlewares/property";
@@ -34,6 +35,25 @@ PropertyRouter.get("/", verifyJWToken, async (req, res) => {
     res.status(500).send(generateErrorMesaage(e));
   }
 });
+
+PropertyRouter.get(
+  "/mine",
+  verifyJWToken,
+  fetchUserFromTokenData,
+  checkIfLandlord,
+  async (req, res) => {
+    try {
+      const { userId } = res.locals;
+      const myProperties = await Property.find({
+        owner: userId,
+      });
+
+      res.status(200).send(myProperties);
+    } catch (e) {
+      res.status(500).send(generateErrorMesaage(e));
+    }
+  },
+);
 
 PropertyRouter.get("/search", verifyJWToken, async (req, res) => {
   try {
@@ -86,6 +106,7 @@ PropertyRouter.post(
   verifyJWToken,
   fetchUserFromTokenData,
   checkIfLandlord,
+  checkPropertyNumberLimit,
   upload.array("photos"),
   validatePropertyRequestBody,
   async (req, res) => {
