@@ -11,6 +11,7 @@ import {
   checkPropertyByIdParam,
   checkPropertyNumberLimit,
   checkPropertyOwnership,
+  checkPropertySearchQuery,
   validatePropertyRequestBody,
 } from "@/middlewares/property";
 import { PropertyDoc } from "@/types/property";
@@ -55,31 +56,36 @@ PropertyRouter.get(
   },
 );
 
-PropertyRouter.get("/search", verifyJWToken, async (req, res) => {
-  try {
-    const { q = "", page } = req.query;
-    const regex = new RegExp(q as string, "i");
-    const query = {
-      $or: [
-        {
-          "location.title": { $regex: regex },
-        },
-        { description: { $regex: regex } },
-        { title: { $regex: regex } },
-      ],
-    };
+PropertyRouter.get(
+  "/search",
+  verifyJWToken,
+  checkPropertySearchQuery,
+  async (req, res) => {
+    try {
+      const { q, page } = req.query;
+      const regex = new RegExp(q as string, "i");
+      const query = {
+        $or: [
+          {
+            "location.title": { $regex: regex },
+          },
+          { description: { $regex: regex } },
+          { title: { $regex: regex } },
+        ],
+      };
 
-    const paginatedResponse = await makePaginatedRequest<PropertyDoc>(
-      Property,
-      query,
-      page as string | undefined,
-    );
+      const paginatedResponse = await makePaginatedRequest<PropertyDoc>(
+        Property,
+        query,
+        page as string | undefined,
+      );
 
-    res.status(200).send(paginatedResponse);
-  } catch (e) {
-    res.status(500).send(generateErrorMesaage(e));
-  }
-});
+      res.status(200).send(paginatedResponse);
+    } catch (e) {
+      res.status(500).send(generateErrorMesaage(e));
+    }
+  },
+);
 
 PropertyRouter.post(
   "/filter",

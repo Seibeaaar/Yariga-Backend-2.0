@@ -76,3 +76,25 @@ export const checkPropertyNumberLimit = async (
     res.status(400).send(generateErrorMesaage(e));
   }
 };
+
+export const checkPropertySearchQuery = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { q } = req.query;
+
+    if (q === undefined || typeof q !== "string") {
+      throw new Error("Please provide a search query");
+    }
+
+    if (q.trim().length === 0) {
+      throw new Error("Invalid search query");
+    }
+
+    next();
+  } catch (e) {
+    res.status(400).send(generateErrorMesaage(e));
+  }
+};
