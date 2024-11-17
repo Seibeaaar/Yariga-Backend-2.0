@@ -9,12 +9,13 @@ import {
 } from "@/middlewares/common";
 import {
   checkPropertyByIdParam,
+  checkPropertyNotSold,
   checkPropertyNumberLimit,
   checkPropertyOwnership,
   checkPropertySearchQuery,
   validatePropertyRequestBody,
 } from "@/middlewares/property";
-import { PropertyDoc } from "@/types/property";
+import { PROPERTY_STATUS, PropertyDoc } from "@/types/property";
 import User from "@/models/User";
 import { upload, uploadPhotoToAWS } from "@/utils/media";
 import { RECOMMENDATIONS_TOTAL_LIMIT } from "@/constants/common";
@@ -196,23 +197,30 @@ PropertyRouter.put(
   },
 );
 
-PropertyRouter.delete(
-  "/:id",
+PropertyRouter.patch(
+  "/toggleVisibility/:id",
   verifyJWToken,
   checkPropertyByIdParam,
   checkPropertyOwnership,
+  checkPropertyNotSold,
   async (req, res) => {
     try {
-      const { userId, property } = res.locals;
-
-      await Property.findByIdAndDelete(property.id);
-      await User.findByIdAndUpdate(userId, {
-        $pull: {
-          properties: property.id,
+      const { property } = res.locals;
+      const newStatus =
+        property.status === PROPERTY_STATUS.Free
+          ? PROPERTY_STATUS.Hidden
+          : PROPERTY_STATUS.Free;
+      const updatedProperty = await Property.findByIdAndUpdate(
+        property.id,
+        {
+          status: newStatus,
         },
-      });
+        {
+          new: true,
+        },
+      ).populate("owner");
 
-      res.status(200).send(`Property ${property.id} deleted successfully.`);
+      res.status(200).send(updatedProperty);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }

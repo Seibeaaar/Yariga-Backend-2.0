@@ -29,6 +29,7 @@ export enum PROPERTY_PAYMENT_PERIOD {
 export enum PROPERTY_STATUS {
   Free = "free",
   Sold = "sold",
+  Hidden = "hidden",
 }
 
 type MinMaxPair = {

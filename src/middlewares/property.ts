@@ -3,6 +3,7 @@ import { generateErrorMesaage } from "@/utils/common";
 import { PROPERTY_DATA_VALIDATION_SCHEMA } from "@/validators/property";
 import Property from "@/models/Property";
 import { MAX_PROPERTY_NUMBER } from "@/constants/property";
+import { PROPERTY_STATUS } from "@/types/property";
 
 export const validatePropertyRequestBody = async (
   req: Request,
@@ -96,5 +97,22 @@ export const checkPropertySearchQuery = async (
     next();
   } catch (e) {
     res.status(400).send(generateErrorMesaage(e));
+  }
+};
+
+export const checkPropertyNotSold = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { property } = res.locals;
+    if (property.status === PROPERTY_STATUS.Sold) {
+      throw new Error("You cannot perform this operation on a sold property");
+    }
+
+    next();
+  } catch (e) {
+    res.status(403).send(generateErrorMesaage(e));
   }
 };
