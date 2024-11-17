@@ -73,6 +73,7 @@ PropertyRouter.get(
           { description: { $regex: regex } },
           { title: { $regex: regex } },
         ],
+        status: PROPERTY_STATUS.Free,
       };
 
       const paginatedResponse = await makePaginatedRequest<PropertyDoc>(
@@ -82,21 +83,6 @@ PropertyRouter.get(
       );
 
       res.status(200).send(paginatedResponse);
-    } catch (e) {
-      res.status(500).send(generateErrorMesaage(e));
-    }
-  },
-);
-
-PropertyRouter.get(
-  "/:id",
-  verifyJWToken,
-  checkPropertyByIdParam,
-  async (req, res) => {
-    try {
-      const { property } = res.locals;
-      const propertyWithOwner = await property.populate("owner");
-      res.status(200).send(propertyWithOwner);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }
@@ -245,6 +231,21 @@ PropertyRouter.get(
       );
 
       res.status(200).send(paginatedResponse);
+    } catch (e) {
+      res.status(500).send(generateErrorMesaage(e));
+    }
+  },
+);
+
+PropertyRouter.get(
+  "/:id",
+  verifyJWToken,
+  checkPropertyByIdParam,
+  async (req, res) => {
+    try {
+      const { property } = res.locals;
+      const propertyWithOwner = await property.populate("owner");
+      res.status(200).send(propertyWithOwner);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }
