@@ -28,7 +28,9 @@ PropertyRouter.get("/", verifyJWToken, async (req, res) => {
   try {
     const paginatedResponse = await makePaginatedRequest<PropertyDoc>(
       Property,
-      {},
+      {
+        status: PROPERTY_STATUS.Free,
+      },
       req.query.page as string | undefined,
     );
 
