@@ -38,21 +38,6 @@ PropertyRouter.get("/", verifyJWToken, async (req, res) => {
 });
 
 PropertyRouter.get(
-  "/:id",
-  verifyJWToken,
-  checkPropertyByIdParam,
-  async (req, res) => {
-    try {
-      const { property } = res.locals;
-      const propertyWithOwner = await property.populate("owner");
-      res.status(200).send(propertyWithOwner);
-    } catch (e) {
-      res.status(500).send(generateErrorMesaage(e));
-    }
-  },
-);
-
-PropertyRouter.get(
   "/mine",
   verifyJWToken,
   fetchUserFromTokenData,
@@ -96,6 +81,21 @@ PropertyRouter.get(
       );
 
       res.status(200).send(paginatedResponse);
+    } catch (e) {
+      res.status(500).send(generateErrorMesaage(e));
+    }
+  },
+);
+
+PropertyRouter.get(
+  "/:id",
+  verifyJWToken,
+  checkPropertyByIdParam,
+  async (req, res) => {
+    try {
+      const { property } = res.locals;
+      const propertyWithOwner = await property.populate("owner");
+      res.status(200).send(propertyWithOwner);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }
@@ -169,7 +169,7 @@ PropertyRouter.post(
 );
 
 PropertyRouter.put(
-  "/update/:id",
+  "/:id",
   verifyJWToken,
   checkPropertyByIdParam,
   checkPropertyOwnership,
@@ -187,7 +187,7 @@ PropertyRouter.put(
         {
           new: true,
         },
-      );
+      ).populate("owner");
 
       res.status(200).send(updatedProperty);
     } catch (e) {
@@ -197,7 +197,7 @@ PropertyRouter.put(
 );
 
 PropertyRouter.delete(
-  "/delete/:id",
+  "/:id",
   verifyJWToken,
   checkPropertyByIdParam,
   checkPropertyOwnership,
