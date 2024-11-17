@@ -16,6 +16,7 @@ import {
 import { AGREEMENT_TYPE } from "@/types/agreement";
 import {
   PROPERTY_PAYMENT_PERIOD,
+  PROPERTY_STATUS,
   PROPERTY_TYPE,
   PropertyFilters,
 } from "@/types/property";
@@ -70,6 +71,7 @@ export const buildPropertyFiltersQuery = (
         Object.values(PROPERTY_TYPE),
       ),
     },
+    status: PROPERTY_STATUS.Free,
     paymentPeriod: {
       $in: selectArrayFilters(
         filters.paymentPeriod,
