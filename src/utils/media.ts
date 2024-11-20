@@ -29,3 +29,15 @@ export const uploadPhotoToAWS = async (
   const upload = await s3.upload(params).promise();
   return upload.Location;
 };
+
+export const deleteAWSPhotos = async (urls: string[]) => {
+  const keys = urls.map((url) => new URL(url).pathname.substring(1));
+  await s3.deleteObjects({
+    Bucket: process.env.AWS_BUCKET_NAME!,
+    Delete: {
+      Objects: keys.map((key) => ({
+        Key: key,
+      })),
+    },
+  });
+};

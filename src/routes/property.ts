@@ -17,7 +17,7 @@ import {
 } from "@/middlewares/property";
 import { PROPERTY_STATUS, PropertyDoc } from "@/types/property";
 import User from "@/models/User";
-import { upload, uploadPhotoToAWS } from "@/utils/media";
+import { deleteAWSPhotos, upload, uploadPhotoToAWS } from "@/utils/media";
 import { RECOMMENDATIONS_TOTAL_LIMIT } from "@/constants/common";
 import { buildPropertyFiltersQuery } from "@/utils/property";
 import { validatePropertyPreferences } from "@/middlewares/user";
@@ -170,13 +170,26 @@ PropertyRouter.put(
         return res.status(400).send("Property photos required");
       }
       const { property } = res.locals;
+
+      await deleteAWSPhotos(property.photos);
+
+      const newPhotoUrls = [];
+
+      for (const file of req.files as Express.Multer.File[]) {
+        const url = await uploadPhotoToAWS(file);
+        newPhotoUrls.push(url);
+      }
+
       const updatedProperty = await Property.findByIdAndUpdate(
         property.id,
-        req.body,
+        {
+          ...req.body,
+          photos: newPhotoUrls,
+        },
         {
           new: true,
         },
-      ).populate("owner");
+      ).populate("owner", "-password");
 
       res.status(200).send(updatedProperty);
     } catch (e) {
@@ -206,7 +219,7 @@ PropertyRouter.patch(
         {
           new: true,
         },
-      ).populate("owner");
+      ).populate("owner", "-password");
 
       res.status(200).send(updatedProperty);
     } catch (e) {
@@ -246,7 +259,7 @@ PropertyRouter.get(
   async (req, res) => {
     try {
       const { property } = res.locals;
-      const propertyWithOwner = await property.populate("owner");
+      const propertyWithOwner = await property.populate("owner", "-password");
       res.status(200).send(propertyWithOwner);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
