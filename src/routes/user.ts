@@ -10,7 +10,7 @@ import {
   verifyJWToken,
 } from "@/middlewares/common";
 import { generateErrorMesaage, omitPasswordForUser } from "@/utils/common";
-import { upload, uploadPhotoToAWS } from "@/utils/media";
+import { upload, uploadPhotosToAWS } from "@/utils/media";
 import { USER_ROLE } from "@/types/user";
 import { getLandlordStats, getTenantStats } from "@/utils/user";
 
@@ -44,7 +44,7 @@ UserRouter.post(
       if (!req.file) {
         return res.status(400).send("Profile picture required");
       }
-      const photoUrl = await uploadPhotoToAWS(req.file);
+      const [photoUrl] = await uploadPhotosToAWS([req.file]);
 
       const { userId } = res.locals;
       const updatedUser = await User.findByIdAndUpdate(

@@ -17,17 +17,25 @@ export const upload = multer({
   },
 });
 
-export const uploadPhotoToAWS = async (
-  file: Express.Multer.File,
-): Promise<string> => {
-  const params = {
-    Bucket: process.env.AWS_BUCKET_NAME!,
-    Key: file.originalname,
-    Body: file.buffer,
-  };
+export const uploadPhotosToAWS = async (
+  files: Express.Multer.File[],
+): Promise<string[]> => {
+  const uploadPromises = files.map(async (file) => {
+    const params = {
+      Bucket: process.env.AWS_BUCKET_NAME!,
+      Key: file.originalname,
+      Body: file.buffer,
+    };
 
-  const upload = await s3.upload(params).promise();
-  return upload.Location;
+    return (await s3.upload(params).promise()).Location;
+  });
+
+  try {
+    const uploadLocations = await Promise.all(uploadPromises);
+    return uploadLocations;
+  } catch (err) {
+    throw new Error(`Upload failed. None of the files were uploaded: ${err}`);
+  }
 };
 
 export const deleteAWSPhotos = async (urls: string[]) => {

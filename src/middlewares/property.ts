@@ -1,17 +1,33 @@
 import { Request, Response, NextFunction } from "express";
 import { generateErrorMesaage } from "@/utils/common";
-import { PROPERTY_DATA_VALIDATION_SCHEMA } from "@/validators/property";
+import {
+  CREATE_PROPERTY_VALIDATION_SCHEMA,
+  UPDATE_PROPERTY_VALIDATION_SCHEMA,
+} from "@/validators/property";
 import Property from "@/models/Property";
 import { MAX_PROPERTY_NUMBER } from "@/constants/property";
 import { PROPERTY_STATUS } from "@/types/property";
 
-export const validatePropertyRequestBody = async (
+export const validateCreatePropertyRequest = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   try {
-    await PROPERTY_DATA_VALIDATION_SCHEMA.validate(req.body);
+    await CREATE_PROPERTY_VALIDATION_SCHEMA.validate(req.body);
+    next();
+  } catch (e) {
+    res.status(400).send(generateErrorMesaage(e));
+  }
+};
+
+export const validateUpdatePropertyRequest = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    await UPDATE_PROPERTY_VALIDATION_SCHEMA.validate(req.body);
     next();
   } catch (e) {
     res.status(400).send(generateErrorMesaage(e));
