@@ -166,7 +166,7 @@ PropertyRouter.put(
   async (req, res) => {
     try {
       const { property } = res.locals;
-      const deletedPhotoURLs = req.body.deletedPhotos;
+      const deletedPhotoURLs = req.body.deletedPhotos || [];
 
       const allPhotosDeleted =
         property.photos.length === deletedPhotoURLs.length;
@@ -189,6 +189,7 @@ PropertyRouter.put(
       const updatedProperty = await Property.findByIdAndUpdate(
         property.id,
         {
+          ...req.body,
           $push: { photos: { $each: newPhotoUrls } },
         },
         { new: true },
