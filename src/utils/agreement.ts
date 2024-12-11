@@ -24,7 +24,7 @@ export const getAgreementUniqueNumber = () => {
   return Math.floor(Math.random() * (999999 - 100000 + 1)) + 100000;
 };
 
-export const buildAgreementCreatorQuery = (
+const buildAgreementCreatorQuery = (
   userId: string,
   createdByMeFlag?: string,
 ) => {

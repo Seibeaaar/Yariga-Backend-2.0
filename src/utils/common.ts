@@ -66,6 +66,5 @@ export const isDefined = <T>(
 };
 
 export const convertQueryParamToBoolean = (queryParam?: string) => {
-  if (!isDefined(queryParam) || !["true", "false"].includes(queryParam)) return;
   return queryParam === "true";
 };

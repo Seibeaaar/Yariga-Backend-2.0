@@ -5,7 +5,6 @@ import {
   validateAgreementEntities,
   validateAgreementFilters,
   validateAgreementRequestBody,
-  validateArchivedAgreementFilters,
   validateGetTotalByIntervalRequest,
 } from "@/middlewares/agreement";
 import {
@@ -19,9 +18,12 @@ import User from "@/models/User";
 import { AGREEMENT_STATUS, AGREEMENT_TOTAL_INTERVAL } from "@/types/agreement";
 import { PROPERTY_STATUS } from "@/types/property";
 import { USER_ROLE } from "@/types/user";
-import { generateErrorMesaage, makePaginatedRequest } from "@/utils/common";
 import {
-  buildAgreementCreatorQuery,
+  convertQueryParamToBoolean,
+  generateErrorMesaage,
+  makePaginatedRequest,
+} from "@/utils/common";
+import {
   buildAgreementGetQuery,
   calculateTotalByMonth,
   calculateTotalByWeeks,
@@ -45,7 +47,7 @@ AgreementRouter.get(
       const { user } = res.locals;
       const query = buildAgreementGetQuery(
         user,
-        false,
+        convertQueryParamToBoolean(req.params.archived),
         req.params.createdByMe as string | undefined,
       );
 
@@ -63,23 +65,29 @@ AgreementRouter.get(
 );
 
 AgreementRouter.get(
-  "/archived",
+  "/search",
   verifyJWToken,
   fetchUserFromTokenData,
-  validateArchivedAgreementFilters,
   async (req, res) => {
     try {
+      const { q = "", page, createdByMe, archived } = req.query;
       const { user } = res.locals;
-      const query = buildAgreementGetQuery(
-        user,
-        true,
-        req.params.createdByMe as string | undefined,
-      );
+
+      const query = {
+        uniqueNumber: {
+          $regex: new RegExp(q as string, "i"),
+        },
+        ...buildAgreementGetQuery(
+          user,
+          convertQueryParamToBoolean(archived as string | undefined),
+          createdByMe as string | undefined,
+        ),
+      };
 
       const paginatedResponse = await makePaginatedRequest(
         Agreement,
         query,
-        req.query.page as string | undefined,
+        page as string | undefined,
       );
 
       res.status(200).send(paginatedResponse);
@@ -88,30 +96,6 @@ AgreementRouter.get(
     }
   },
 );
-
-AgreementRouter.get("/search", verifyJWToken, async (req, res) => {
-  try {
-    const { q = "", page, createdByMe } = req.query;
-    const { userId } = res.locals;
-
-    const query = {
-      uniqueNumber: {
-        $regex: new RegExp(q as string, "i"),
-      },
-      ...buildAgreementCreatorQuery(userId, createdByMe as string | undefined),
-    };
-
-    const paginatedResponse = await makePaginatedRequest(
-      Agreement,
-      query,
-      page as string | undefined,
-    );
-
-    res.status(200).send(paginatedResponse);
-  } catch (e) {
-    res.status(500).send(generateErrorMesaage(e));
-  }
-});
 
 AgreementRouter.post(
   "/create",
