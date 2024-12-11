@@ -36,6 +36,8 @@ import {
   NON_ARCHIVED_AGREEMENT_STATUSES,
 } from "@/constants/agreement";
 import { calculateTotalByDays } from "@/utils/agreement";
+import { createAgreementNotification } from "@/utils/notification";
+import { NOTIFICATION_TYPE } from "@/types/notification";
 
 const AgreementRouter = Router();
 
@@ -134,13 +136,20 @@ AgreementRouter.post(
   validateAgreementEntities,
   async (req, res) => {
     try {
-      const { userId } = res.locals;
+      const { user } = res.locals;
       const agreement = new Agreement({
         ...req.body,
-        creator: userId,
+        creator: user.id,
         uniqueNumber: getAgreementUniqueNumber(),
       });
       await agreement.save();
+
+      await createAgreementNotification(
+        NOTIFICATION_TYPE.NewAgreement,
+        user,
+        agreement,
+      );
+
       res.status(201).send(agreement);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
@@ -151,11 +160,12 @@ AgreementRouter.post(
 AgreementRouter.put(
   "/:id/accept",
   verifyJWToken,
+  fetchUserFromTokenData,
   checkAgreementIdParam,
   checkIsAgreementCounterpart,
   async (req, res) => {
     try {
-      const { agreement } = res.locals;
+      const { agreement, user } = res.locals;
       const acceptedAgreement = await Agreement.findByIdAndUpdate(
         agreement.id,
         {
@@ -189,6 +199,12 @@ AgreementRouter.put(
         },
       );
 
+      await createAgreementNotification(
+        NOTIFICATION_TYPE.AgreementAccepted,
+        user,
+        acceptedAgreement!,
+      );
+
       res.status(200).send(acceptedAgreement);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
@@ -199,11 +215,12 @@ AgreementRouter.put(
 AgreementRouter.put(
   "/:id/decline",
   verifyJWToken,
+  fetchUserFromTokenData,
   checkAgreementIdParam,
   checkIsAgreementCounterpart,
   async (req, res) => {
     try {
-      const { agreement } = res.locals;
+      const { agreement, user } = res.locals;
       const declinedAgreement = await Agreement.findByIdAndUpdate(
         agreement.id,
         {
@@ -216,6 +233,12 @@ AgreementRouter.put(
         },
       );
 
+      await createAgreementNotification(
+        NOTIFICATION_TYPE.AgreementDeclined,
+        user,
+        declinedAgreement!,
+      );
+
       res.status(200).send(declinedAgreement);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
@@ -226,16 +249,17 @@ AgreementRouter.put(
 AgreementRouter.post(
   "/:id/counter",
   verifyJWToken,
+  fetchUserFromTokenData,
   checkAgreementIdParam,
   checkIsAgreementCounterpart,
   validateAgreementRequestBody,
   validateAgreementEntities,
   async (req, res) => {
     try {
-      const { userId, agreement } = res.locals;
+      const { user, agreement } = res.locals;
       const counterAgreement = new Agreement({
         ...req.body,
-        creator: userId,
+        creator: user.id,
         parent: agreement.id,
         uniqueNumber: getAgreementUniqueNumber(),
       });
@@ -250,6 +274,12 @@ AgreementRouter.post(
         {
           new: true,
         },
+      );
+
+      await createAgreementNotification(
+        NOTIFICATION_TYPE.AgreementCountered,
+        user,
+        counterAgreement!,
       );
 
       res.status(201).send(counterAgreement);

@@ -1,8 +1,11 @@
 import { NOTIFICATION_TYPE } from "@/types/notification";
-import { UserDocument } from "@/types/user";
+import { User, UserDocument } from "@/types/user";
 import { getUserFullName } from "./user";
+import { AgreementDocument } from "@/types/agreement";
+import { getAgreementCounterpart } from "./agreement";
+import Notification from "@/models/Notification";
 
-export const generateNotificationContent = (
+const generateNotificationContent = (
   type: NOTIFICATION_TYPE,
   sender: UserDocument,
 ) => {
@@ -21,4 +24,23 @@ export const generateNotificationContent = (
     default:
       return null;
   }
+};
+
+export const createAgreementNotification = async (
+  type: NOTIFICATION_TYPE,
+  user: User,
+  agreement: AgreementDocument,
+) => {
+  const receiver =
+    type === NOTIFICATION_TYPE.NewAgreement
+      ? agreement.landlord
+      : getAgreementCounterpart(agreement, user.id);
+  const notification = new Notification({
+    sender: user.id,
+    receiver,
+    content: generateNotificationContent(type, user),
+  });
+  await notification.save();
+
+  return notification;
 };

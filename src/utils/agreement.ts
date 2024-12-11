@@ -3,6 +3,7 @@ import week from "dayjs/plugin/weekOfYear";
 import {
   AGREEMENT_STATUS,
   AGREEMENT_TOTAL_INTERVAL,
+  AgreementDocument,
   TotalByInterval,
 } from "@/types/agreement";
 import Agreement from "@/models/Agreement";
@@ -20,6 +21,15 @@ dayjs.extend(week);
 
 export const getAgreementUniqueNumber = () => {
   return Math.floor(Math.random() * (999999 - 100000 + 1)) + 100000;
+};
+
+export const getAgreementCounterpart = (
+  agreement: AgreementDocument,
+  userId: string,
+) => {
+  return [agreement.landlord, agreement.tenant].find(
+    (part) => part !== castToObjectId(userId),
+  );
 };
 
 export const calculateTotalByMonth = async (user: User) => {
