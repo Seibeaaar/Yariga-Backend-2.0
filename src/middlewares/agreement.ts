@@ -7,6 +7,7 @@ import { generateErrorMesaage } from "@/utils/common";
 import User from "@/models/User";
 import Property from "@/models/Property";
 import Agreement from "@/models/Agreement";
+import { convertQueryParamToBoolean } from "@/utils/common";
 import { AGREEMENT_TOTAL_INTERVAL } from "@/types/agreement";
 
 export const validateAgreementRequestBody = async (
@@ -28,7 +29,9 @@ export const validateAgreementFilters = async (
   next: NextFunction,
 ) => {
   try {
-    await buildAgreementFiltersSchema(false).validate(req.query);
+    const isArchived = convertQueryParamToBoolean(req.params.archived);
+    res.locals.isArchived = isArchived;
+    await buildAgreementFiltersSchema(isArchived).validate(req.query);
     next();
   } catch (e) {
     res.status(400).send(generateErrorMesaage(e));

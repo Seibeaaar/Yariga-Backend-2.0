@@ -24,6 +24,7 @@ import {
   makePaginatedRequest,
 } from "@/utils/common";
 import {
+  buildAgreementFilterQuery,
   buildAgreementGetQuery,
   calculateTotalByMonth,
   calculateTotalByWeeks,
@@ -41,7 +42,6 @@ AgreementRouter.get(
   "/",
   verifyJWToken,
   fetchUserFromTokenData,
-  validateAgreementFilters,
   async (req, res) => {
     try {
       const { user } = res.locals;
@@ -73,21 +73,56 @@ AgreementRouter.get(
       const { q = "", page, createdByMe, archived } = req.query;
       const { user } = res.locals;
 
+      const getQuery = buildAgreementGetQuery(
+        user,
+        convertQueryParamToBoolean(archived as string | undefined),
+        createdByMe as string | undefined,
+      );
+
       const query = {
         uniqueNumber: {
           $regex: new RegExp(q as string, "i"),
         },
-        ...buildAgreementGetQuery(
-          user,
-          convertQueryParamToBoolean(archived as string | undefined),
-          createdByMe as string | undefined,
-        ),
+        ...getQuery,
       };
 
       const paginatedResponse = await makePaginatedRequest(
         Agreement,
         query,
         page as string | undefined,
+      );
+
+      res.status(200).send(paginatedResponse);
+    } catch (e) {
+      res.status(500).send(generateErrorMesaage(e));
+    }
+  },
+);
+
+AgreementRouter.post(
+  "/filter",
+  verifyJWToken,
+  fetchUserFromTokenData,
+  validateAgreementFilters,
+  async (req, res) => {
+    try {
+      const { user, isArchived } = res.locals;
+
+      const getQuery = buildAgreementGetQuery(
+        user,
+        isArchived,
+        req.params.createdByMe as string | undefined,
+      );
+      const filterQuery = buildAgreementFilterQuery(isArchived, ...req.body);
+      const combinedQuery = {
+        ...getQuery,
+        ...filterQuery,
+      };
+
+      const paginatedResponse = await makePaginatedRequest(
+        Agreement,
+        combinedQuery,
+        req.query.page as string | undefined,
       );
 
       res.status(200).send(paginatedResponse);

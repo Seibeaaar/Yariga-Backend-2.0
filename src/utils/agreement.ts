@@ -4,6 +4,7 @@ import {
   AGREEMENT_CREATOR_PARAM,
   AGREEMENT_STATUS,
   AGREEMENT_TOTAL_INTERVAL,
+  AGREEMENT_TYPE,
   AgreementDocument,
   TotalByInterval,
 } from "@/types/agreement";
@@ -11,12 +12,15 @@ import Agreement from "@/models/Agreement";
 import { USER_ROLE, User } from "@/types/user";
 import {
   AGGREGATE_CONFIG_BY_INTERVAL,
+  ARCHIVED_AGREEMENT_STATUSES,
   DAY_STATS_THRESHOLD,
   MONTH_STATS_THRESHOLD,
+  NON_ARCHIVED_AGREEMENT_STATUSES,
   WEEK_STATS_THRESHOLD,
   YEAR_STATS_THRESHOLD,
 } from "@/constants/agreement";
-import { castToObjectId } from "./common";
+import { castToObjectId, isDefined } from "./common";
+import { FilterQuery } from "mongoose";
 
 dayjs.extend(week);
 
@@ -47,6 +51,43 @@ export const buildAgreementGetQuery = (
     [user.role === USER_ROLE.Landlord ? "landlord" : "tenant"]: user.id,
     isArchived,
     ...buildAgreementCreatorQuery(user.id, createdByMeFlag),
+  };
+};
+
+const buildAgreementCreateTimeQuery = (
+  createdBefore?: string,
+  createdAfter?: string,
+) => {
+  const query = {} as FilterQuery<AgreementDocument>;
+  if (isDefined(createdAfter)) {
+    query.$gte = dayjs(createdAfter).startOf("day").toISOString();
+  }
+
+  if (isDefined(createdBefore)) {
+    query.$lte = dayjs(createdBefore).endOf("day").toISOString();
+  }
+
+  return query;
+};
+
+export const getDefaultAgreementStatus = (isArchived: boolean) =>
+  isArchived ? ARCHIVED_AGREEMENT_STATUSES : NON_ARCHIVED_AGREEMENT_STATUSES;
+
+export const buildAgreementFilterQuery = (
+  isArchived: boolean,
+  status?: AGREEMENT_STATUS[],
+  type?: AGREEMENT_TYPE,
+  createdBefore?: string,
+  createdAfter?: string,
+) => {
+  return {
+    status: {
+      $in: status ?? getDefaultAgreementStatus(isArchived),
+    },
+    type: {
+      $in: type ?? Object.values(AGREEMENT_TYPE),
+    },
+    createdAt: buildAgreementCreateTimeQuery(createdBefore, createdAfter),
   };
 };
 
