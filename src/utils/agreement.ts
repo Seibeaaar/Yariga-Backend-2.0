@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 import week from "dayjs/plugin/weekOfYear";
 import {
+  AGREEMENT_CREATOR_PARAM,
   AGREEMENT_STATUS,
   AGREEMENT_TOTAL_INTERVAL,
   AgreementDocument,
@@ -21,6 +22,32 @@ dayjs.extend(week);
 
 export const getAgreementUniqueNumber = () => {
   return Math.floor(Math.random() * (999999 - 100000 + 1)) + 100000;
+};
+
+export const buildAgreementCreatorQuery = (
+  userId: string,
+  createdByMeFlag?: string,
+) => {
+  switch (createdByMeFlag) {
+    case AGREEMENT_CREATOR_PARAM.Mine:
+      return { creator: userId };
+    case AGREEMENT_CREATOR_PARAM.Others:
+      return { creator: { $ne: userId } };
+    default:
+      return {};
+  }
+};
+
+export const buildAgreementGetQuery = (
+  user: User,
+  isArchived: boolean,
+  createdByMeFlag?: string,
+) => {
+  return {
+    [user.role === USER_ROLE.Landlord ? "landlord" : "tenant"]: user.id,
+    isArchived,
+    ...buildAgreementCreatorQuery(user.id, createdByMeFlag),
+  };
 };
 
 export const getAgreementCounterpart = (

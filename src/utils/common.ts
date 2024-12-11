@@ -58,3 +58,14 @@ export const makePaginatedRequest = async <T>(
 };
 
 export const castToObjectId = (id: string) => new Types.ObjectId(id);
+
+export const isDefined = <T>(
+  value: T | null | undefined,
+): value is NonNullable<T> => {
+  return value !== null && value !== undefined;
+};
+
+export const convertQueryParamToBoolean = (queryParam?: string) => {
+  if (!isDefined(queryParam) || !["true", "false"].includes(queryParam)) return;
+  return queryParam === "true";
+};

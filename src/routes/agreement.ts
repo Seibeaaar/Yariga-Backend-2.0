@@ -16,25 +16,19 @@ import {
 import Agreement from "@/models/Agreement";
 import Property from "@/models/Property";
 import User from "@/models/User";
-import {
-  AGREEMENT_STATUS,
-  AGREEMENT_TOTAL_INTERVAL,
-  AGREEMENT_TYPE,
-} from "@/types/agreement";
+import { AGREEMENT_STATUS, AGREEMENT_TOTAL_INTERVAL } from "@/types/agreement";
 import { PROPERTY_STATUS } from "@/types/property";
 import { USER_ROLE } from "@/types/user";
 import { generateErrorMesaage, makePaginatedRequest } from "@/utils/common";
 import {
+  buildAgreementCreatorQuery,
+  buildAgreementGetQuery,
   calculateTotalByMonth,
   calculateTotalByWeeks,
   calculateTotalByYears,
   getAgreementUniqueNumber,
 } from "@/utils/agreement";
 import { Router } from "express";
-import {
-  ARCHIVED_AGREEMENT_STATUSES,
-  NON_ARCHIVED_AGREEMENT_STATUSES,
-} from "@/constants/agreement";
 import { calculateTotalByDays } from "@/utils/agreement";
 import { createAgreementNotification } from "@/utils/notification";
 import { NOTIFICATION_TYPE } from "@/types/notification";
@@ -49,16 +43,11 @@ AgreementRouter.get(
   async (req, res) => {
     try {
       const { user } = res.locals;
-      const query = {
-        [user.role === USER_ROLE.Landlord ? "landlord" : "tenant"]: user.id,
-        isArchived: false,
-        status: {
-          $in: req.query.status ?? NON_ARCHIVED_AGREEMENT_STATUSES,
-        },
-        type: {
-          $in: req.query.type ?? Object.values(AGREEMENT_TYPE),
-        },
-      };
+      const query = buildAgreementGetQuery(
+        user,
+        false,
+        req.params.createdByMe as string | undefined,
+      );
 
       const paginatedResponse = await makePaginatedRequest(
         Agreement,
@@ -81,16 +70,11 @@ AgreementRouter.get(
   async (req, res) => {
     try {
       const { user } = res.locals;
-      const query = {
-        [user.role === USER_ROLE.Landlord ? "landlord" : "tenant"]: user.id,
-        isArchived: true,
-        status: {
-          $in: req.query.status ?? ARCHIVED_AGREEMENT_STATUSES,
-        },
-        type: {
-          $in: req.query.type ?? Object.values(AGREEMENT_TYPE),
-        },
-      };
+      const query = buildAgreementGetQuery(
+        user,
+        true,
+        req.params.createdByMe as string | undefined,
+      );
 
       const paginatedResponse = await makePaginatedRequest(
         Agreement,
@@ -107,12 +91,14 @@ AgreementRouter.get(
 
 AgreementRouter.get("/search", verifyJWToken, async (req, res) => {
   try {
-    const { q = "", page } = req.query;
+    const { q = "", page, createdByMe } = req.query;
+    const { userId } = res.locals;
 
     const query = {
       uniqueNumber: {
         $regex: new RegExp(q as string, "i"),
       },
+      ...buildAgreementCreatorQuery(userId, createdByMe as string | undefined),
     };
 
     const paginatedResponse = await makePaginatedRequest(

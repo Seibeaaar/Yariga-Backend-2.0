@@ -34,3 +34,9 @@ export type IntervalConfig = {
     format: string;
   };
 };
+
+export enum AGREEMENT_CREATOR_PARAM {
+  Mine = "mine",
+  Others = "others",
+  All = "all",
+}
