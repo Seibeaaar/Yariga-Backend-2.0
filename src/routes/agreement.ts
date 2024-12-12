@@ -47,8 +47,8 @@ AgreementRouter.get(
       const { user } = res.locals;
       const query = buildAgreementGetQuery(
         user,
-        convertQueryParamToBoolean(req.params.archived),
-        req.params.createdByMe as string | undefined,
+        convertQueryParamToBoolean(req.query.isArchived as string | undefined),
+        req.query.createdBy as string | undefined,
       );
 
       const paginatedResponse = await makePaginatedRequest(
@@ -70,13 +70,13 @@ AgreementRouter.get(
   fetchUserFromTokenData,
   async (req, res) => {
     try {
-      const { q = "", page, createdByMe, archived } = req.query;
+      const { q = "", page, createdBy, isArchived } = req.query;
       const { user } = res.locals;
 
       const getQuery = buildAgreementGetQuery(
         user,
-        convertQueryParamToBoolean(archived as string | undefined),
-        createdByMe as string | undefined,
+        convertQueryParamToBoolean(isArchived as string | undefined),
+        createdBy as string | undefined,
       );
 
       const query = {
@@ -111,9 +111,11 @@ AgreementRouter.post(
       const getQuery = buildAgreementGetQuery(
         user,
         isArchived,
-        req.params.createdByMe as string | undefined,
+        req.query.createdBy as string | undefined,
       );
-      const filterQuery = buildAgreementFilterQuery(isArchived, ...req.body);
+
+      const filterQuery = buildAgreementFilterQuery(isArchived, req.body);
+
       const combinedQuery = {
         ...getQuery,
         ...filterQuery,

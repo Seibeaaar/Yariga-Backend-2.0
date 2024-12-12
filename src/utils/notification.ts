@@ -39,6 +39,7 @@ export const createAgreementNotification = async (
     sender: user.id,
     receiver,
     content: generateNotificationContent(type, user),
+    type,
   });
   await notification.save();
 

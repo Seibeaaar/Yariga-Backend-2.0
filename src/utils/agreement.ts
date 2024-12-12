@@ -6,6 +6,7 @@ import {
   AGREEMENT_TOTAL_INTERVAL,
   AGREEMENT_TYPE,
   AgreementDocument,
+  FilterAgreementsRequest,
   TotalByInterval,
 } from "@/types/agreement";
 import Agreement from "@/models/Agreement";
@@ -28,12 +29,9 @@ export const getAgreementUniqueNumber = () => {
   return Math.floor(Math.random() * (999999 - 100000 + 1)) + 100000;
 };
 
-const buildAgreementCreatorQuery = (
-  userId: string,
-  createdByMeFlag?: string,
-) => {
-  switch (createdByMeFlag) {
-    case AGREEMENT_CREATOR_PARAM.Mine:
+const buildAgreementCreatorQuery = (userId: string, createdByFlag?: string) => {
+  switch (createdByFlag) {
+    case AGREEMENT_CREATOR_PARAM.Me:
       return { creator: userId };
     case AGREEMENT_CREATOR_PARAM.Others:
       return { creator: { $ne: userId } };
@@ -45,12 +43,12 @@ const buildAgreementCreatorQuery = (
 export const buildAgreementGetQuery = (
   user: User,
   isArchived: boolean,
-  createdByMeFlag?: string,
+  createdByFlag?: string,
 ) => {
   return {
     [user.role === USER_ROLE.Landlord ? "landlord" : "tenant"]: user.id,
     isArchived,
-    ...buildAgreementCreatorQuery(user.id, createdByMeFlag),
+    ...buildAgreementCreatorQuery(user.id, createdByFlag),
   };
 };
 
@@ -58,16 +56,22 @@ const buildAgreementCreateTimeQuery = (
   createdBefore?: string,
   createdAfter?: string,
 ) => {
+  const beforeLimitImposed = isDefined(createdBefore);
+  const afterLimitImposed = isDefined(createdAfter);
+
+  if (!beforeLimitImposed && !afterLimitImposed) return {};
+
   const query = {} as FilterQuery<AgreementDocument>;
-  if (isDefined(createdAfter)) {
+
+  if (afterLimitImposed) {
     query.$gte = dayjs(createdAfter).startOf("day").toISOString();
   }
 
-  if (isDefined(createdBefore)) {
+  if (beforeLimitImposed) {
     query.$lte = dayjs(createdBefore).endOf("day").toISOString();
   }
 
-  return query;
+  return { createdAt: query };
 };
 
 export const getDefaultAgreementStatus = (isArchived: boolean) =>
@@ -75,19 +79,19 @@ export const getDefaultAgreementStatus = (isArchived: boolean) =>
 
 export const buildAgreementFilterQuery = (
   isArchived: boolean,
-  status?: AGREEMENT_STATUS[],
-  type?: AGREEMENT_TYPE,
-  createdBefore?: string,
-  createdAfter?: string,
+  request: FilterAgreementsRequest,
 ) => {
   return {
     status: {
-      $in: status ?? getDefaultAgreementStatus(isArchived),
+      $in: request.status ?? getDefaultAgreementStatus(isArchived),
     },
     type: {
-      $in: type ?? Object.values(AGREEMENT_TYPE),
+      $in: request.type ?? Object.values(AGREEMENT_TYPE),
     },
-    createdAt: buildAgreementCreateTimeQuery(createdBefore, createdAfter),
+    ...buildAgreementCreateTimeQuery(
+      request.createdBefore,
+      request.createdAfter,
+    ),
   };
 };
 

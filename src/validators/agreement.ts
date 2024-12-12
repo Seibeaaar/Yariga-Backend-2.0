@@ -6,6 +6,7 @@ import { MAX_SALE_AMOUNT, MIN_RENT_AMOUNT } from "@/constants/property";
 import { AGREEMENT_TYPE } from "@/types/agreement";
 import { PROPERTY_PAYMENT_PERIOD } from "@/types/property";
 import { getDefaultAgreementStatus } from "@/utils/agreement";
+import { isDefined } from "@/utils/common";
 import dayjs from "dayjs";
 import { isValidObjectId } from "mongoose";
 import * as yup from "yup";
@@ -15,6 +16,36 @@ export const buildAgreementFiltersSchema = (isArchived: boolean) => {
   return yup.object({
     type: yup.array().of(yup.string().oneOf(Object.values(AGREEMENT_TYPE))),
     status: yup.array().of(yup.string().oneOf(Object.values(statuses))),
+    createdBefore: yup
+      .string()
+      .test("createdBefore", "Invalid before timestamp", (v?: string) =>
+        dayjs(v).isValid(),
+      )
+      .test(
+        "createdBefore",
+        "Created before should not be in the future",
+        (v?: string) => dayjs(v) <= dayjs().endOf("day"),
+      ),
+    createdAfter: yup
+      .string()
+      .test("createdAfter", "Invalid after timestamp", (v?: string) =>
+        dayjs(v).isValid(),
+      )
+      .test({
+        name: "createdAfter",
+        params: {
+          createdBefore: yup.ref("createdBefore"),
+        },
+        test: function (v?: string) {
+          const createdAfterDate = dayjs(v).startOf("day");
+          const isInFuture = createdAfterDate > dayjs().endOf("day");
+          const { createdBefore } = this.parent as yup.AnyObject;
+          if (!isDefined(createdBefore)) return !isInFuture;
+          return (
+            !isInFuture && createdAfterDate <= dayjs(createdBefore).endOf("day")
+          );
+        },
+      }),
   });
 };
 

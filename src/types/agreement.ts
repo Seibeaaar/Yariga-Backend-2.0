@@ -36,7 +36,14 @@ export type IntervalConfig = {
 };
 
 export enum AGREEMENT_CREATOR_PARAM {
-  Mine = "mine",
+  Me = "me",
   Others = "others",
   All = "all",
 }
+
+export type FilterAgreementsRequest = {
+  status?: AGREEMENT_STATUS[];
+  type?: AGREEMENT_TYPE[];
+  createdBefore?: string;
+  createdAfter?: string;
+};

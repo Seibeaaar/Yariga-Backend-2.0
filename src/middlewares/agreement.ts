@@ -29,9 +29,11 @@ export const validateAgreementFilters = async (
   next: NextFunction,
 ) => {
   try {
-    const isArchived = convertQueryParamToBoolean(req.params.archived);
+    const isArchived = convertQueryParamToBoolean(
+      req.query.isArchived as string | undefined,
+    );
     res.locals.isArchived = isArchived;
-    await buildAgreementFiltersSchema(isArchived).validate(req.query);
+    await buildAgreementFiltersSchema(isArchived).validate(req.body);
     next();
   } catch (e) {
     res.status(400).send(generateErrorMesaage(e));
