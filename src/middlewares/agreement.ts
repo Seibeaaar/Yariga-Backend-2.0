@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import {
-  AGREEMENT_VALIDATION_SCHEMA,
+  CREATE_AGREEMENT_SCHEMA,
+  AGREEMENT_UPDATE_SCHEMA,
   buildAgreementFiltersSchema,
 } from "@/validators/agreement";
 import { generateErrorMesaage } from "@/utils/common";
@@ -10,13 +11,26 @@ import Agreement from "@/models/Agreement";
 import { convertQueryParamToBoolean } from "@/utils/common";
 import { AGREEMENT_TOTAL_INTERVAL } from "@/types/agreement";
 
-export const validateAgreementRequestBody = async (
+export const validateAgreementCreate = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   try {
-    await AGREEMENT_VALIDATION_SCHEMA.validate(req.body);
+    await CREATE_AGREEMENT_SCHEMA.validate(req.body);
+    next();
+  } catch (e) {
+    res.status(400).send(generateErrorMesaage(e));
+  }
+};
+
+export const validateAgreementUpdateDetails = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    await AGREEMENT_UPDATE_SCHEMA.validate(req.body);
     next();
   } catch (e) {
     res.status(400).send(generateErrorMesaage(e));
@@ -34,19 +48,6 @@ export const validateAgreementFilters = async (
     );
     res.locals.isArchived = isArchived;
     await buildAgreementFiltersSchema(isArchived).validate(req.body);
-    next();
-  } catch (e) {
-    res.status(400).send(generateErrorMesaage(e));
-  }
-};
-
-export const validateArchivedAgreementFilters = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    await buildAgreementFiltersSchema(true).validate(req.query);
     next();
   } catch (e) {
     res.status(400).send(generateErrorMesaage(e));

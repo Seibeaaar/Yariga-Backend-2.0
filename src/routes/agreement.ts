@@ -4,7 +4,8 @@ import {
   checkIsAgreementOwner,
   validateAgreementEntities,
   validateAgreementFilters,
-  validateAgreementRequestBody,
+  validateAgreementCreate,
+  validateAgreementUpdateDetails,
   validateGetTotalByIntervalRequest,
 } from "@/middlewares/agreement";
 import {
@@ -139,7 +140,7 @@ AgreementRouter.post(
   verifyJWToken,
   fetchUserFromTokenData,
   checkIfTenant,
-  validateAgreementRequestBody,
+  validateAgreementCreate,
   validateAgreementEntities,
   async (req, res) => {
     try {
@@ -259,12 +260,13 @@ AgreementRouter.post(
   fetchUserFromTokenData,
   checkAgreementIdParam,
   checkIsAgreementCounterpart,
-  validateAgreementRequestBody,
+  validateAgreementUpdateDetails,
   validateAgreementEntities,
   async (req, res) => {
     try {
       const { user, agreement } = res.locals;
       const counterAgreement = new Agreement({
+        ...agreement,
         ...req.body,
         creator: user.id,
         parent: agreement.id,
@@ -325,12 +327,12 @@ AgreementRouter.delete(
 );
 
 AgreementRouter.put(
-  "/:id/update",
+  "/:id",
   verifyJWToken,
   fetchUserFromTokenData,
   checkAgreementIdParam,
   checkIsAgreementOwner,
-  validateAgreementRequestBody,
+  validateAgreementUpdateDetails,
   validateAgreementEntities,
   async (req, res) => {
     try {

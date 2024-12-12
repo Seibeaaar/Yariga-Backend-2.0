@@ -49,19 +49,7 @@ export const buildAgreementFiltersSchema = (isArchived: boolean) => {
   });
 };
 
-export const AGREEMENT_VALIDATION_SCHEMA = yup.object({
-  tenant: yup
-    .string()
-    .required("Tenant required")
-    .test((v: string) => isValidObjectId(v)),
-  landlord: yup
-    .string()
-    .required("Landlord required")
-    .test((v: string) => isValidObjectId(v)),
-  property: yup
-    .string()
-    .required("Property required")
-    .test((v: string) => isValidObjectId(v)),
+export const AGREEMENT_BASIC_DATA_SCHEMA = {
   type: yup
     .mixed<AGREEMENT_TYPE>()
     .required("Agreement type required")
@@ -108,14 +96,26 @@ export const AGREEMENT_VALIDATION_SCHEMA = yup.object({
         );
       },
     }),
-  parent: yup.string().test((v?: string) => {
-    if (v) {
-      return isValidObjectId(v);
-    }
-    return true;
-  }),
   paymentPeriod: yup
     .mixed<PROPERTY_PAYMENT_PERIOD>()
     .required("Payment period required")
     .oneOf(Object.values(PROPERTY_PAYMENT_PERIOD)),
+};
+
+export const CREATE_AGREEMENT_SCHEMA = yup.object({
+  ...AGREEMENT_BASIC_DATA_SCHEMA,
+  tenant: yup
+    .string()
+    .required("Tenant required")
+    .test((v: string) => isValidObjectId(v)),
+  landlord: yup
+    .string()
+    .required("Landlord required")
+    .test((v: string) => isValidObjectId(v)),
+  property: yup
+    .string()
+    .required("Property required")
+    .test((v: string) => isValidObjectId(v)),
 });
+
+export const AGREEMENT_UPDATE_SCHEMA = yup.object(AGREEMENT_BASIC_DATA_SCHEMA);
