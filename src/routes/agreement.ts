@@ -52,11 +52,24 @@ AgreementRouter.get(
         req.query.createdBy as string | undefined,
       );
 
-      const paginatedResponse = await makePaginatedRequest(
-        Agreement,
+      const paginatedResponse = await makePaginatedRequest({
+        model: Agreement,
         query,
-        req.query.page as string | undefined,
-      );
+        page: req.query.page as string | undefined,
+        populate: [
+          {
+            path: "landlord",
+            select: "-password",
+          },
+          {
+            path: "tenant",
+            select: "-password",
+          },
+          {
+            path: "property",
+          },
+        ],
+      });
 
       res.status(200).send(paginatedResponse);
     } catch (e) {
@@ -87,11 +100,24 @@ AgreementRouter.get(
         ...getQuery,
       };
 
-      const paginatedResponse = await makePaginatedRequest(
-        Agreement,
+      const paginatedResponse = await makePaginatedRequest({
+        model: Agreement,
         query,
-        page as string | undefined,
-      );
+        page: page as string | undefined,
+        populate: [
+          {
+            path: "landlord",
+            select: "-password",
+          },
+          {
+            path: "tenant",
+            select: "-password",
+          },
+          {
+            path: "property",
+          },
+        ],
+      });
 
       res.status(200).send(paginatedResponse);
     } catch (e) {
@@ -122,11 +148,24 @@ AgreementRouter.post(
         ...filterQuery,
       };
 
-      const paginatedResponse = await makePaginatedRequest(
-        Agreement,
-        combinedQuery,
-        req.query.page as string | undefined,
-      );
+      const paginatedResponse = await makePaginatedRequest({
+        model: Agreement,
+        query: combinedQuery,
+        page: req.query.page as string | undefined,
+        populate: [
+          {
+            path: "landlord",
+            select: "-password",
+          },
+          {
+            path: "tenant",
+            select: "-password",
+          },
+          {
+            path: "property",
+          },
+        ],
+      });
 
       res.status(200).send(paginatedResponse);
     } catch (e) {

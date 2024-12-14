@@ -10,13 +10,13 @@ const NotificationRouter = Router();
 NotificationRouter.get("/", verifyJWToken, async (req, res) => {
   try {
     const { userId } = res.locals;
-    const paginatedResponse = await makePaginatedRequest<NotificationDocument>(
-      Notification,
-      {
+    const paginatedResponse = await makePaginatedRequest<NotificationDocument>({
+      model: Notification,
+      query: {
         receiver: userId,
       },
-      req.query.page as string | undefined,
-    );
+      page: req.query.page as string | undefined,
+    });
 
     res.status(200).send(paginatedResponse);
   } catch (e) {

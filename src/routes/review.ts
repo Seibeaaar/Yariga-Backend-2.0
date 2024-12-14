@@ -49,11 +49,11 @@ ReviewRouter.get("/received", verifyJWToken, async (req, res) => {
       reviewee: userId,
     };
 
-    const paginatedResponse = await makePaginatedRequest(
-      Review,
+    const paginatedResponse = await makePaginatedRequest({
+      model: Review,
       query,
-      req.query.page as string | undefined,
-    );
+      page: req.query.page as string | undefined,
+    });
     res.status(200).send(paginatedResponse);
   } catch (e) {
     res.status(500).send(generateErrorMesaage(e));
@@ -67,11 +67,11 @@ ReviewRouter.get("/sent", verifyJWToken, async (req, res) => {
       reviewer: userId,
     };
 
-    const paginatedResponse = await makePaginatedRequest(
-      Review,
+    const paginatedResponse = await makePaginatedRequest({
+      model: Review,
       query,
-      req.query.page as string | undefined,
-    );
+      page: req.query.page as string | undefined,
+    });
     res.status(200).send(paginatedResponse);
   } catch (e) {
     res.status(500).send(generateErrorMesaage(e));

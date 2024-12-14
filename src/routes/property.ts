@@ -26,13 +26,13 @@ const PropertyRouter = Router();
 
 PropertyRouter.get("/", verifyJWToken, async (req, res) => {
   try {
-    const paginatedResponse = await makePaginatedRequest<PropertyDoc>(
-      Property,
-      {
+    const paginatedResponse = await makePaginatedRequest<PropertyDoc>({
+      model: Property,
+      query: {
         status: PROPERTY_STATUS.Free,
       },
-      req.query.page as string | undefined,
-    );
+      page: req.query.page as string | undefined,
+    });
 
     res.status(200).send(paginatedResponse);
   } catch (e) {
@@ -78,11 +78,11 @@ PropertyRouter.get(
         status: PROPERTY_STATUS.Free,
       };
 
-      const paginatedResponse = await makePaginatedRequest<PropertyDoc>(
-        Property,
+      const paginatedResponse = await makePaginatedRequest<PropertyDoc>({
+        model: Property,
         query,
-        page as string | undefined,
-      );
+        page: page as string | undefined,
+      });
 
       res.status(200).send(paginatedResponse);
     } catch (e) {
@@ -98,11 +98,11 @@ PropertyRouter.post(
   async (req, res) => {
     try {
       const filtersQuery = buildPropertyFiltersQuery(req.body);
-      const paginatedResponse = await makePaginatedRequest<PropertyDoc>(
-        Property,
-        filtersQuery,
-        req.query.page as string | undefined,
-      );
+      const paginatedResponse = await makePaginatedRequest<PropertyDoc>({
+        model: Property,
+        query: filtersQuery,
+        page: req.query.page as string | undefined,
+      });
 
       res.status(200).send(paginatedResponse);
     } catch (e) {
@@ -176,7 +176,7 @@ PropertyRouter.put(
         {
           new: true,
         },
-      ).populate("owner");
+      ).populate("owner -password");
 
       res.status(200).send(updatedProperty);
     } catch (e) {
@@ -206,7 +206,7 @@ PropertyRouter.patch(
         {
           new: true,
         },
-      ).populate("owner");
+      ).populate("owner -password");
 
       res.status(200).send(updatedProperty);
     } catch (e) {
@@ -225,12 +225,12 @@ PropertyRouter.get(
       const { user } = res.locals;
       const query = buildPropertyFiltersQuery(user.preferences || {});
 
-      const paginatedResponse = await makePaginatedRequest(
-        Property,
+      const paginatedResponse = await makePaginatedRequest({
+        model: Property,
         query,
-        req.query.page as string | undefined,
-        RECOMMENDATIONS_TOTAL_LIMIT,
-      );
+        page: req.query.page as string | undefined,
+        totalLimit: RECOMMENDATIONS_TOTAL_LIMIT,
+      });
 
       res.status(200).send(paginatedResponse);
     } catch (e) {
@@ -246,7 +246,7 @@ PropertyRouter.get(
   async (req, res) => {
     try {
       const { property } = res.locals;
-      const propertyWithOwner = await property.populate("owner");
+      const propertyWithOwner = await property.populate("owner -password");
       res.status(200).send(propertyWithOwner);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
