@@ -20,8 +20,9 @@ import {
   WEEK_STATS_THRESHOLD,
   YEAR_STATS_THRESHOLD,
 } from "@/constants/agreement";
-import { castToObjectId, isDefined } from "./common";
+import { castToObjectId, isDefined, valueOrDefault } from "./common";
 import { FilterQuery } from "mongoose";
+import { PROPERTY_PAYMENT_PERIOD } from "@/types/property";
 
 dayjs.extend(week);
 
@@ -81,18 +82,21 @@ export const buildAgreementFilterQuery = (
   isArchived: boolean,
   request: FilterAgreementsRequest,
 ) => {
-  const queriedStatuses = request.status.length
-    ? request.status
-    : getDefaultAgreementStatus(isArchived);
-  const queriedTypes = request.type.length
-    ? request.type
-    : Object.values(AGREEMENT_TYPE);
   return {
     status: {
-      $in: queriedStatuses,
+      $in: valueOrDefault(
+        request.status,
+        getDefaultAgreementStatus(isArchived),
+      ),
     },
     type: {
-      $in: queriedTypes,
+      $in: valueOrDefault(request.type, Object.values(AGREEMENT_TYPE)),
+    },
+    paymentPeriod: {
+      $in: valueOrDefault(
+        request.paymentPeriod,
+        Object.values(PROPERTY_PAYMENT_PERIOD),
+      ),
     },
     ...buildAgreementCreateTimeQuery(
       request.createdBefore,

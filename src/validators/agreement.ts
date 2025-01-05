@@ -16,6 +16,9 @@ export const buildAgreementFiltersSchema = (isArchived: boolean) => {
   return yup.object({
     type: yup.array().of(yup.string().oneOf(Object.values(AGREEMENT_TYPE))),
     status: yup.array().of(yup.string().oneOf(Object.values(statuses))),
+    paymentPeriod: yup
+      .array()
+      .of(yup.string().oneOf(Object.values(PROPERTY_PAYMENT_PERIOD))),
     createdBefore: yup
       .string()
       .test("createdBefore", "Invalid before timestamp", (v?: string) =>

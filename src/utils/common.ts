@@ -75,3 +75,9 @@ export const isDefined = <T>(
 export const convertQueryParamToBoolean = (queryParam?: string) => {
   return queryParam === "true";
 };
+
+export const valueOrDefault = <T>(value: T | T[], fallback: T | T[]) => {
+  const isEmptyArray = Array.isArray(value) && value.length === 0;
+  if (!isDefined(value) || isEmptyArray) return fallback;
+  return value;
+};
