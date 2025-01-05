@@ -81,12 +81,18 @@ export const buildAgreementFilterQuery = (
   isArchived: boolean,
   request: FilterAgreementsRequest,
 ) => {
+  const queriedStatuses = request.status.length
+    ? request.status
+    : getDefaultAgreementStatus(isArchived);
+  const queriedTypes = request.type.length
+    ? request.type
+    : Object.values(AGREEMENT_TYPE);
   return {
     status: {
-      $in: request.status ?? getDefaultAgreementStatus(isArchived),
+      $in: queriedStatuses,
     },
     type: {
-      $in: request.type ?? Object.values(AGREEMENT_TYPE),
+      $in: queriedTypes,
     },
     ...buildAgreementCreateTimeQuery(
       request.createdBefore,

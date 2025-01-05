@@ -42,8 +42,8 @@ export enum AGREEMENT_CREATOR_PARAM {
 }
 
 export type FilterAgreementsRequest = {
-  status?: AGREEMENT_STATUS[];
-  type?: AGREEMENT_TYPE[];
+  status: AGREEMENT_STATUS[];
+  type: AGREEMENT_TYPE[];
   createdBefore?: string;
   createdAfter?: string;
 };

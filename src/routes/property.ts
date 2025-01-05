@@ -246,7 +246,10 @@ PropertyRouter.get(
   async (req, res) => {
     try {
       const { property } = res.locals;
-      const propertyWithOwner = await property.populate("owner -password");
+      const propertyWithOwner = await property.populate({
+        path: "owner",
+        select: "-password",
+      });
       res.status(200).send(propertyWithOwner);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
