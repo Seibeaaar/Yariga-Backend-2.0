@@ -17,8 +17,8 @@ import {
   DAY_STATS_THRESHOLD,
   MONTH_STATS_THRESHOLD,
   NON_ARCHIVED_AGREEMENT_STATUSES,
-  WEEK_STATS_THRESHOLD,
   YEAR_STATS_THRESHOLD,
+  WEEK_STATS_THRESHOLD,
 } from "@/constants/agreement";
 import { castToObjectId, isDefined, valueOrDefault } from "./common";
 import { FilterQuery } from "mongoose";
@@ -51,6 +51,22 @@ export const buildAgreementGetQuery = (
     isArchived,
     ...buildAgreementCreatorQuery(user.id, createdByFlag),
   };
+};
+
+export const calculateTotalByWeeks = async (user: User) => {
+  const currentWeek = dayjs().endOf("week");
+  const weeks = Array.from({ length: WEEK_STATS_THRESHOLD }).map((_, i) => {
+    const week = currentWeek.subtract(WEEK_STATS_THRESHOLD - (i + 1), "weeks");
+    return week.format("YYYY-MM-DD");
+  });
+
+  const totalByWeeks = await aggregateTotalsByInterval(
+    weeks,
+    user,
+    AGREEMENT_TOTAL_INTERVAL.Weekly,
+  );
+
+  return totalByWeeks;
 };
 
 const buildAgreementCreateTimeQuery = (
@@ -149,22 +165,6 @@ export const calculateTotalByDays = async (user: User) => {
   return totalByDays;
 };
 
-export const calculateTotalByWeeks = async (user: User) => {
-  const currentWeek = dayjs().endOf("week");
-  const weeks = Array.from({ length: WEEK_STATS_THRESHOLD }).map((_, i) => {
-    const week = currentWeek.subtract(WEEK_STATS_THRESHOLD - (i + 1), "weeks");
-    return week.format("YYYY-MM-DD");
-  });
-
-  const totalByWeeks = await aggregateTotalsByInterval(
-    weeks,
-    user,
-    AGREEMENT_TOTAL_INTERVAL.Weekly,
-  );
-
-  return totalByWeeks;
-};
-
 export const calculateTotalByYears = async (user: User) => {
   const currentYear = dayjs().endOf("year");
   const years = Array.from({ length: YEAR_STATS_THRESHOLD }).map((_, i) => {
@@ -205,16 +205,88 @@ const aggregateTotalsByInterval = async (
 ) => {
   const userId = castToObjectId(user.id);
   const { unit, format } = AGGREGATE_CONFIG_BY_INTERVAL[intervalUnit];
+
+  const intervalStart = dayjs(dates[0]).startOf(unit).toISOString();
+  const intervalEnd = dayjs(dates[dates.length - 1])
+    .endOf(unit)
+    .toISOString();
+
   const result = await Agreement.aggregate([
     {
       $match: {
         [user.role === USER_ROLE.Landlord ? "landlord" : "tenant"]: userId,
         status: AGREEMENT_STATUS.Accepted,
         startDate: {
-          $gte: dayjs(dates[0]).startOf(unit).toISOString(),
-          $lte: dayjs(dates[dates.length - 1])
-            .endOf(unit)
-            .toISOString(),
+          $lte: intervalEnd,
+          $gte: intervalStart,
+        },
+      },
+    },
+    {
+      $project: {
+        startDate: 1,
+        amount: 1,
+        paymentPeriod: 1,
+        type: 1,
+        iterations: {
+          $cond: {
+            if: {
+              $eq: ["$type", AGREEMENT_TYPE.Rent],
+            },
+            then: {
+              $dateDiff: {
+                startDate: {
+                  $max: [{ $toDate: intervalStart }, { $toDate: "$startDate" }],
+                },
+                endDate: {
+                  $min: [{ $toDate: "$endDate" }, { $toDate: intervalEnd }],
+                },
+                unit: {
+                  $switch: {
+                    branches: [
+                      {
+                        case: {
+                          $eq: [
+                            "$paymentPeriod",
+                            PROPERTY_PAYMENT_PERIOD.Monthly,
+                          ],
+                        },
+                        then: "month",
+                      },
+                      {
+                        case: {
+                          $eq: [
+                            "$paymentPeriod",
+                            PROPERTY_PAYMENT_PERIOD.Yearly,
+                          ],
+                        },
+                        then: "year",
+                      },
+                      {
+                        case: {
+                          $eq: [
+                            "$paymentPeriod",
+                            PROPERTY_PAYMENT_PERIOD.Weekly,
+                          ],
+                        },
+                        then: "week",
+                      },
+                    ],
+                    default: "day",
+                  },
+                },
+                startOfWeek: "mon",
+              },
+            },
+            else: 1,
+          },
+        },
+      },
+    },
+    {
+      $addFields: {
+        totalAmount: {
+          $multiply: ["$iterations", "$amount"],
         },
       },
     },
@@ -223,12 +295,10 @@ const aggregateTotalsByInterval = async (
         _id: {
           $dateToString: {
             format,
-            date: {
-              $dateFromString: { dateString: "$startDate", format: "%Y-%m-%d" },
-            },
+            date: "$agreementStart",
           },
         },
-        totalAmount: { $sum: "$amount" },
+        totalAmount: { $sum: "$totalAmount" },
       },
     },
     {
