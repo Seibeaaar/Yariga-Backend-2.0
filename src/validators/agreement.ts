@@ -5,7 +5,7 @@ import {
 import { MAX_SALE_AMOUNT, MIN_RENT_AMOUNT } from "@/constants/property";
 import { AGREEMENT_TYPE } from "@/types/agreement";
 import { PROPERTY_PAYMENT_PERIOD } from "@/types/property";
-import { getDefaultAgreementStatus } from "@/utils/agreement";
+import { getDefaultAgreementStatus } from "@/utils/agreement/shared";
 import { isDefined } from "@/utils/common";
 import dayjs from "dayjs";
 import { isValidObjectId } from "mongoose";

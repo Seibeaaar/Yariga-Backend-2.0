@@ -1,57 +1,24 @@
 import dayjs from "dayjs";
 import week from "dayjs/plugin/weekOfYear";
 import {
-  AGREEMENT_CREATOR_PARAM,
   AGREEMENT_STATUS,
   AGREEMENT_TOTAL_INTERVAL,
   AGREEMENT_TYPE,
-  AgreementDocument,
-  FilterAgreementsRequest,
   TotalByInterval,
 } from "@/types/agreement";
 import Agreement from "@/models/Agreement";
 import { USER_ROLE, User } from "@/types/user";
 import {
   AGGREGATE_CONFIG_BY_INTERVAL,
-  ARCHIVED_AGREEMENT_STATUSES,
   DAY_STATS_THRESHOLD,
   MONTH_STATS_THRESHOLD,
-  NON_ARCHIVED_AGREEMENT_STATUSES,
   YEAR_STATS_THRESHOLD,
   WEEK_STATS_THRESHOLD,
 } from "@/constants/agreement";
-import { castToObjectId, isDefined, valueOrDefault } from "./common";
-import { FilterQuery } from "mongoose";
+import { castToObjectId } from "../common";
 import { PROPERTY_PAYMENT_PERIOD } from "@/types/property";
 
 dayjs.extend(week);
-
-export const getAgreementUniqueNumber = () => {
-  return Math.floor(Math.random() * (999999 - 100000 + 1)) + 100000;
-};
-
-const buildAgreementCreatorQuery = (userId: string, createdByFlag?: string) => {
-  switch (createdByFlag) {
-    case AGREEMENT_CREATOR_PARAM.Me:
-      return { creator: userId };
-    case AGREEMENT_CREATOR_PARAM.Others:
-      return { creator: { $ne: userId } };
-    default:
-      return {};
-  }
-};
-
-export const buildAgreementGetQuery = (
-  user: User,
-  isArchived: boolean,
-  createdByFlag?: string,
-) => {
-  return {
-    [user.role === USER_ROLE.Landlord ? "landlord" : "tenant"]: user.id,
-    isArchived,
-    ...buildAgreementCreatorQuery(user.id, createdByFlag),
-  };
-};
 
 export const calculateTotalByWeeks = async (user: User) => {
   const currentWeek = dayjs().endOf("week");
@@ -67,67 +34,6 @@ export const calculateTotalByWeeks = async (user: User) => {
   );
 
   return totalByWeeks;
-};
-
-const buildAgreementCreateTimeQuery = (
-  createdBefore?: string,
-  createdAfter?: string,
-) => {
-  const beforeLimitImposed = isDefined(createdBefore);
-  const afterLimitImposed = isDefined(createdAfter);
-
-  if (!beforeLimitImposed && !afterLimitImposed) return {};
-
-  const query = {} as FilterQuery<AgreementDocument>;
-
-  if (afterLimitImposed) {
-    query.$gte = dayjs(createdAfter).startOf("day").toISOString();
-  }
-
-  if (beforeLimitImposed) {
-    query.$lte = dayjs(createdBefore).endOf("day").toISOString();
-  }
-
-  return { createdAt: query };
-};
-
-export const getDefaultAgreementStatus = (isArchived: boolean) =>
-  isArchived ? ARCHIVED_AGREEMENT_STATUSES : NON_ARCHIVED_AGREEMENT_STATUSES;
-
-export const buildAgreementFilterQuery = (
-  isArchived: boolean,
-  request: FilterAgreementsRequest,
-) => {
-  return {
-    status: {
-      $in: valueOrDefault(
-        request.status,
-        getDefaultAgreementStatus(isArchived),
-      ),
-    },
-    type: {
-      $in: valueOrDefault(request.type, Object.values(AGREEMENT_TYPE)),
-    },
-    paymentPeriod: {
-      $in: valueOrDefault(
-        request.paymentPeriod,
-        Object.values(PROPERTY_PAYMENT_PERIOD),
-      ),
-    },
-    ...buildAgreementCreateTimeQuery(
-      request.createdBefore,
-      request.createdAfter,
-    ),
-  };
-};
-
-export const getAgreementCounterpart = (
-  agreement: AgreementDocument,
-  userId: string,
-) => {
-  return [agreement.landlord, agreement.tenant].find(
-    (part) => part !== castToObjectId(userId),
-  );
 };
 
 export const calculateTotalByMonth = async (user: User) => {

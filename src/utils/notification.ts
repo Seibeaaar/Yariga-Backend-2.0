@@ -2,7 +2,7 @@ import { NOTIFICATION_TYPE } from "@/types/notification";
 import { User, UserDocument } from "@/types/user";
 import { getUserFullName } from "./user";
 import { AgreementDocument } from "@/types/agreement";
-import { getAgreementCounterpart } from "./agreement";
+import { getAgreementCounterpart } from "./agreement/shared";
 import Notification from "@/models/Notification";
 
 const generateNotificationContent = (

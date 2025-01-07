@@ -24,16 +24,18 @@ import {
   generateErrorMesaage,
   makePaginatedRequest,
 } from "@/utils/common";
+import { getAgreementUniqueNumber } from "@/utils/agreement/shared";
+import { Router } from "express";
 import {
   buildAgreementFilterQuery,
   buildAgreementGetQuery,
-  calculateTotalByMonth,
+} from "@/utils/agreement/filter";
+import {
+  calculateTotalByDays,
   calculateTotalByWeeks,
+  calculateTotalByMonth,
   calculateTotalByYears,
-  getAgreementUniqueNumber,
-} from "@/utils/agreement";
-import { Router } from "express";
-import { calculateTotalByDays } from "@/utils/agreement";
+} from "@/utils/agreement/totals";
 import { createAgreementNotification } from "@/utils/notification";
 import { NOTIFICATION_TYPE } from "@/types/notification";
 
