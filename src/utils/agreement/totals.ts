@@ -1,5 +1,6 @@
 import dayjs from "dayjs";
 import week from "dayjs/plugin/weekOfYear";
+import advancedFormat from "dayjs/plugin/advancedFormat";
 import {
   AGREEMENT_STATUS,
   AGREEMENT_TOTAL_INTERVAL,
@@ -19,6 +20,7 @@ import { castToObjectId } from "../common";
 import { PROPERTY_PAYMENT_PERIOD } from "@/types/property";
 
 dayjs.extend(week);
+dayjs.extend(advancedFormat);
 
 export const calculateTotalByWeeks = async (user: User) => {
   const currentWeek = dayjs().endOf("week");
@@ -111,7 +113,6 @@ const aggregateTotalsByInterval = async (
 ) => {
   const userId = castToObjectId(user.id);
   const { unit, format } = AGGREGATE_CONFIG_BY_INTERVAL[intervalUnit];
-
   const intervalStart = dayjs(dates[0]).startOf(unit).toISOString();
   const intervalEnd = dayjs(dates[dates.length - 1])
     .endOf(unit)
@@ -181,7 +182,6 @@ const aggregateTotalsByInterval = async (
                     default: "day",
                   },
                 },
-                startOfWeek: "mon",
               },
             },
             else: 1,
@@ -201,7 +201,7 @@ const aggregateTotalsByInterval = async (
         _id: {
           $dateToString: {
             format,
-            date: "$agreementStart",
+            date: { $toDate: "$startDate" },
           },
         },
         totalAmount: { $sum: "$totalAmount" },
@@ -213,7 +213,8 @@ const aggregateTotalsByInterval = async (
   ]);
 
   return dates.reduce((acc: TotalByInterval[], date) => {
-    const periodInfo = result.find((r) => r._id === date);
+    const comparedDate = unit === "week" ? dayjs(date).format("ww") : date;
+    const periodInfo = result.find((r) => r._id === comparedDate);
     const totalValue = periodInfo ? periodInfo.totalAmount : 0;
     const periodName = getNameByIntervalUnit(intervalUnit, date);
     acc.push({
