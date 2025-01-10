@@ -10,7 +10,6 @@ import Property from "@/models/Property";
 import Agreement from "@/models/Agreement";
 import { convertQueryParamToBoolean } from "@/utils/common";
 import { AGREEMENT_TOTAL_INTERVAL } from "@/types/agreement";
-
 export const validateAgreementCreate = async (
   req: Request,
   res: Response,
@@ -113,6 +112,27 @@ export const checkAgreementIdParam = async (
     next();
   } catch (e) {
     res.status(404).send(generateErrorMesaage(e));
+  }
+};
+
+export const checkIsAgreementPart = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { userId, agreement } = res.locals;
+
+    if (
+      !agreement.landlord.equals(userId) &&
+      !agreement.tenant.equals(userId)
+    ) {
+      throw new Error("You cannot access an agreement you are not a part of");
+    }
+
+    next();
+  } catch (e) {
+    res.status(403).send(generateErrorMesaage(e));
   }
 };
 

@@ -7,6 +7,7 @@ import {
   validateAgreementCreate,
   validateAgreementUpdateDetails,
   validateGetTotalByIntervalRequest,
+  checkIsAgreementPart,
 } from "@/middlewares/agreement";
 import {
   checkIfTenant,
@@ -60,14 +61,6 @@ AgreementRouter.get(
         page: req.query.page as string | undefined,
         populate: [
           {
-            path: "landlord",
-            select: "-password",
-          },
-          {
-            path: "tenant",
-            select: "-password",
-          },
-          {
             path: "property",
           },
         ],
@@ -108,14 +101,6 @@ AgreementRouter.get(
         page: page as string | undefined,
         populate: [
           {
-            path: "landlord",
-            select: "-password",
-          },
-          {
-            path: "tenant",
-            select: "-password",
-          },
-          {
             path: "property",
           },
         ],
@@ -155,14 +140,6 @@ AgreementRouter.post(
         query: combinedQuery,
         page: req.query.page as string | undefined,
         populate: [
-          {
-            path: "landlord",
-            select: "-password",
-          },
-          {
-            path: "tenant",
-            select: "-password",
-          },
           {
             path: "property",
           },
@@ -436,6 +413,39 @@ AgreementRouter.get(
         .limit(5);
 
       res.status(200).send(latestAgreements);
+    } catch (e) {
+      res.status(500).send(generateErrorMesaage(e));
+    }
+  },
+);
+
+AgreementRouter.get(
+  "/:id",
+  verifyJWToken,
+  checkAgreementIdParam,
+  checkIsAgreementPart,
+  async (req, res) => {
+    try {
+      const { agreement } = res.locals;
+
+      const expanedAgreement = await agreement.populate([
+        {
+          path: "landlord",
+          select: "-password",
+        },
+        {
+          path: "tenant",
+          select: "-password",
+        },
+        {
+          path: "parent",
+        },
+        {
+          path: "property",
+        },
+      ]);
+
+      res.status(200).send(expanedAgreement);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }
