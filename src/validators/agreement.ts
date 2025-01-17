@@ -76,29 +76,30 @@ export const AGREEMENT_BASIC_DATA_SCHEMA = {
       `Start date should not be in more than ${MAX_START_DATE_THRESHOLD} days`,
       (v: string) => dayjs(v).diff(dayjs(), "d") <= MAX_START_DATE_THRESHOLD,
     ),
-  endDate: yup
-    .string()
-    .when("type", ([type], schema) => {
-      if (type === AGREEMENT_TYPE.Rent) {
-        return schema.required("End date required");
-      }
+  endDate: yup.string().when("type", ([type], schema) => {
+    if (type === AGREEMENT_TYPE.Rent) {
+      return schema
+        .required("End date required")
+        .test("endDate", "Invalid end date", (v: string) => {
+          return dayjs(v).isValid();
+        })
+        .test({
+          name: "endDate",
+          message: "End date should be later than the start one.",
+          params: {
+            startDate: yup.ref("startDate"),
+          },
+          test: function (v: string) {
+            const { startDate } = this.parent as yup.AnyObject;
+            return (
+              dayjs(v).diff(dayjs(startDate), "d") >= MIN_START_DATE_THRESHOLD
+            );
+          },
+        });
+    }
 
-      return schema;
-    })
-    .test("endDate", "Invalid end date", (v?: string) => dayjs(v).isValid())
-    .test({
-      name: "endDate",
-      params: {
-        startDate: yup.ref("startDate"),
-      },
-      test: function (v?: string) {
-        const { startDate } = this.parent as yup.AnyObject;
-        return (
-          dayjs(v).isValid() &&
-          dayjs(v).diff(dayjs(startDate), "d") >= MIN_START_DATE_THRESHOLD
-        );
-      },
-    }),
+    return schema;
+  }),
   paymentPeriod: yup
     .mixed<PROPERTY_PAYMENT_PERIOD>()
     .required("Payment period required")
@@ -107,14 +108,6 @@ export const AGREEMENT_BASIC_DATA_SCHEMA = {
 
 export const CREATE_AGREEMENT_SCHEMA = yup.object({
   ...AGREEMENT_BASIC_DATA_SCHEMA,
-  tenant: yup
-    .string()
-    .required("Tenant required")
-    .test((v: string) => isValidObjectId(v)),
-  landlord: yup
-    .string()
-    .required("Landlord required")
-    .test((v: string) => isValidObjectId(v)),
   property: yup
     .string()
     .required("Property required")

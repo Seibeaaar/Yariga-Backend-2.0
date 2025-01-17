@@ -2,7 +2,7 @@ import {
   checkAgreementIdParam,
   checkIsAgreementCounterpart,
   checkIsAgreementOwner,
-  validateAgreementEntities,
+  validateAgreementProperty,
   validateAgreementFilters,
   validateAgreementCreate,
   validateAgreementUpdateDetails,
@@ -26,6 +26,7 @@ import {
   makePaginatedRequest,
 } from "@/utils/common";
 import {
+  getAgreementCounterpart,
   getAgreementUniqueNumber,
   populateAgreement,
 } from "@/utils/agreement/shared";
@@ -162,13 +163,15 @@ AgreementRouter.post(
   fetchUserFromTokenData,
   checkIfTenant,
   validateAgreementCreate,
-  validateAgreementEntities,
+  validateAgreementProperty,
   async (req, res) => {
     try {
-      const { user } = res.locals;
+      const { user, landlord } = res.locals;
       const agreement = new Agreement({
         ...req.body,
         creator: user.id,
+        tenant: user.id,
+        landlord,
         uniqueNumber: getAgreementUniqueNumber(),
       });
       await agreement.save();
@@ -288,15 +291,23 @@ AgreementRouter.post(
   checkAgreementIdParam,
   checkIsAgreementCounterpart,
   validateAgreementUpdateDetails,
-  validateAgreementEntities,
   async (req, res) => {
     try {
       const { user, agreement } = res.locals;
+
+      const isCallerTenant = user.role === USER_ROLE.Tenant;
+      const counterpart = getAgreementCounterpart(agreement, user.id);
+      const [tenant, landlord] = isCallerTenant
+        ? [user.id, counterpart]
+        : [counterpart, user.id];
+
       const counterAgreement = new Agreement({
         ...agreement,
         ...req.body,
         creator: user.id,
         parent: agreement.id,
+        tenant,
+        landlord,
         uniqueNumber: getAgreementUniqueNumber(),
       });
 
@@ -362,7 +373,6 @@ AgreementRouter.put(
   checkAgreementIdParam,
   checkIsAgreementOwner,
   validateAgreementUpdateDetails,
-  validateAgreementEntities,
   async (req, res) => {
     try {
       const { agreement } = res.locals;
@@ -370,8 +380,9 @@ AgreementRouter.put(
         ...req.body,
         updatedAt: new Date().toISOString(),
       });
+      const expandedAgreement = await populateAgreement(updatedAgreement);
 
-      res.status(200).send(updatedAgreement);
+      res.status(200).send(expandedAgreement);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }
