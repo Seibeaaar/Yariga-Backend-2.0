@@ -26,7 +26,6 @@ import {
   makePaginatedRequest,
 } from "@/utils/common";
 import {
-  getAgreementCounterpart,
   getAgreementUniqueNumber,
   populateAgreement,
 } from "@/utils/agreement/shared";
@@ -296,16 +295,15 @@ AgreementRouter.post(
       const { user, agreement } = res.locals;
 
       const isCallerTenant = user.role === USER_ROLE.Tenant;
-      const counterpart = getAgreementCounterpart(agreement, user.id);
       const [tenant, landlord] = isCallerTenant
-        ? [user.id, counterpart]
-        : [counterpart, user.id];
+        ? [user.id, agreement.landlord]
+        : [agreement.tenant, user.id];
 
       const counterAgreement = new Agreement({
-        ...agreement,
         ...req.body,
         creator: user.id,
         parent: agreement.id,
+        property: agreement.property,
         tenant,
         landlord,
         uniqueNumber: getAgreementUniqueNumber(),

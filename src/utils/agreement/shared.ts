@@ -34,6 +34,7 @@ export const populateAgreement = async (agreement: Document | null) => {
     },
     {
       path: "parent",
+      populate: "property",
     },
     {
       path: "property",
