@@ -25,7 +25,10 @@ import {
   generateErrorMesaage,
   makePaginatedRequest,
 } from "@/utils/common";
-import { getAgreementUniqueNumber } from "@/utils/agreement/shared";
+import {
+  getAgreementUniqueNumber,
+  populateAgreement,
+} from "@/utils/agreement/shared";
 import { Router } from "express";
 import {
   buildAgreementFilterQuery,
@@ -176,7 +179,9 @@ AgreementRouter.post(
         agreement,
       );
 
-      res.status(201).send(agreement);
+      const expandedAgreement = await populateAgreement(agreement);
+
+      res.status(201).send(expandedAgreement);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }
@@ -231,7 +236,9 @@ AgreementRouter.put(
         acceptedAgreement!,
       );
 
-      res.status(200).send(acceptedAgreement);
+      const expandedAgreement = await populateAgreement(acceptedAgreement);
+
+      res.status(200).send(expandedAgreement);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }
@@ -259,13 +266,15 @@ AgreementRouter.put(
         },
       );
 
+      const expandedAgreement = await populateAgreement(declinedAgreement);
+
       await createAgreementNotification(
         NOTIFICATION_TYPE.AgreementDeclined,
         user,
         declinedAgreement!,
       );
 
-      res.status(200).send(declinedAgreement);
+      res.status(200).send(expandedAgreement);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }
@@ -309,7 +318,9 @@ AgreementRouter.post(
         counterAgreement!,
       );
 
-      res.status(201).send(counterAgreement);
+      const expandedAgreement = await populateAgreement(counterAgreement);
+
+      res.status(201).send(expandedAgreement);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }
@@ -428,22 +439,7 @@ AgreementRouter.get(
     try {
       const { agreement } = res.locals;
 
-      const expanedAgreement = await agreement.populate([
-        {
-          path: "landlord",
-          select: "-password",
-        },
-        {
-          path: "tenant",
-          select: "-password",
-        },
-        {
-          path: "parent",
-        },
-        {
-          path: "property",
-        },
-      ]);
+      const expanedAgreement = await populateAgreement(agreement);
 
       res.status(200).send(expanedAgreement);
     } catch (e) {

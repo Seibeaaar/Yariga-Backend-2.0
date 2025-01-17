@@ -4,6 +4,7 @@ import {
 } from "@/constants/agreement";
 import { castToObjectId } from "../common";
 import { AgreementDocument } from "@/types/agreement";
+import { Document } from "mongoose";
 
 export const getAgreementCounterpart = (
   agreement: AgreementDocument,
@@ -20,3 +21,22 @@ export const getAgreementUniqueNumber = () => {
 
 export const getDefaultAgreementStatus = (isArchived: boolean) =>
   isArchived ? ARCHIVED_AGREEMENT_STATUSES : NON_ARCHIVED_AGREEMENT_STATUSES;
+
+export const populateAgreement = async (agreement: Document | null) => {
+  return await agreement?.populate([
+    {
+      path: "landlord",
+      select: "-password",
+    },
+    {
+      path: "tenant",
+      select: "-password",
+    },
+    {
+      path: "parent",
+    },
+    {
+      path: "property",
+    },
+  ]);
+};
