@@ -35,21 +35,29 @@ const processPageQueryParam = (pageParam: string | undefined): number => {
   return +pageParam;
 };
 
-export const makePaginatedRequest = async <T>(
-  config: PaginatedRequestConfig<T>,
-) => {
-  const { page, model, query, totalLimit, populate = [] } = config;
-
+const calculatePagination = (page?: string, totalLimit?: number) => {
   const pageNumber = processPageQueryParam(page);
   const startIndex = (pageNumber - 1) * PAGINATION_LIMIT;
   const remainingLimit = totalLimit
     ? Math.max(0, totalLimit - startIndex)
     : PAGINATION_LIMIT;
-
   const effectivePageLimit = Math.min(PAGINATION_LIMIT, remainingLimit);
+
+  return { pageNumber, startIndex, effectivePageLimit };
+};
+
+export const makePaginatedRequest = async <T>(
+  config: PaginatedRequestConfig<T>,
+) => {
+  const { page, model, query, totalLimit, populate = [], sort = {} } = config;
+  const { pageNumber, startIndex, effectivePageLimit } = calculatePagination(
+    page,
+    totalLimit,
+  );
 
   const results = await model
     .find(query)
+    .sort(sort)
     .skip(startIndex)
     .limit(effectivePageLimit)
     .populate(populate);
