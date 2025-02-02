@@ -1,28 +1,23 @@
-import { MAX_LATEST_NOTIFICATIONS } from "@/constants/notification";
 import { verifyJWToken } from "@/middlewares/common";
 import Notification from "@/models/Notification";
-import { NotificationDocument } from "@/types/notification";
-import { generateErrorMesaage, makePaginatedRequest } from "@/utils/common";
+import { generateErrorMesaage } from "@/utils/common";
+import { makeNotificationKeysetRequest } from "@/utils/notification";
 import { Router } from "express";
 
 const NotificationRouter = Router();
 
-NotificationRouter.get("/unread", verifyJWToken, async (req, res) => {
+NotificationRouter.get("/new", verifyJWToken, async (req, res) => {
   try {
     const { userId } = res.locals;
-    const paginatedResponse = await makePaginatedRequest<NotificationDocument>({
-      model: Notification,
-      query: {
-        receiver: userId,
-        isRead: false,
-      },
-      page: req.query.page as string | undefined,
-      sort: {
-        createdAt: -1,
-      },
-    });
+    const { lastCreatedAt } = req.query;
 
-    res.status(200).send(paginatedResponse);
+    const notifications = await makeNotificationKeysetRequest(
+      userId,
+      false,
+      lastCreatedAt as string | undefined,
+    );
+
+    res.status(200).send(notifications);
   } catch (e) {
     res.status(500).send(generateErrorMesaage(e));
   }
@@ -31,19 +26,15 @@ NotificationRouter.get("/unread", verifyJWToken, async (req, res) => {
 NotificationRouter.get("/read", verifyJWToken, async (req, res) => {
   try {
     const { userId } = res.locals;
-    const paginatedResponse = await makePaginatedRequest<NotificationDocument>({
-      model: Notification,
-      query: {
-        receiver: userId,
-        isRead: true,
-      },
-      page: req.query.page as string | undefined,
-      sort: {
-        createdAt: -1,
-      },
-    });
+    const { lastCreatedAt } = req.query;
 
-    res.status(200).send(paginatedResponse);
+    const notifications = await makeNotificationKeysetRequest(
+      userId,
+      true,
+      lastCreatedAt as string | undefined,
+    );
+
+    res.status(200).send(notifications);
   } catch (e) {
     res.status(500).send(generateErrorMesaage(e));
   }
@@ -70,16 +61,21 @@ NotificationRouter.post("/read", verifyJWToken, async (req, res) => {
   }
 });
 
-NotificationRouter.get("/latest", verifyJWToken, async (req, res) => {
+NotificationRouter.post("/delete", verifyJWToken, async (req, res) => {
   try {
-    const { userId } = res.locals;
-    const latestNotifications = await Notification.find({
-      receiver: userId,
-    })
-      .sort({ createdAt: -1 })
-      .limit(MAX_LATEST_NOTIFICATIONS);
+    const notificationsIds = req.body.notifications;
 
-    res.status(200).send(latestNotifications);
+    const bulkOperations = notificationsIds.map((_id: string) => ({
+      deleteOne: {
+        filter: { _id: _id },
+      },
+    }));
+
+    await Notification.bulkWrite(bulkOperations);
+
+    res
+      .status(200)
+      .send(`Notifications ${notificationsIds.join(", ")} have been removed.`);
   } catch (e) {
     res.status(500).send(generateErrorMesaage(e));
   }

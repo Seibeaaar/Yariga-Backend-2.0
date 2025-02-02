@@ -49,7 +49,7 @@ const calculatePagination = (page?: string, totalLimit?: number) => {
 export const makePaginatedRequest = async <T>(
   config: PaginatedRequestConfig<T>,
 ) => {
-  const { page, model, query, totalLimit, populate = [], sort = {} } = config;
+  const { page, model, query, totalLimit, populate = [] } = config;
   const { pageNumber, startIndex, effectivePageLimit } = calculatePagination(
     page,
     totalLimit,
@@ -57,7 +57,6 @@ export const makePaginatedRequest = async <T>(
 
   const results = await model
     .find(query)
-    .sort(sort)
     .skip(startIndex)
     .limit(effectivePageLimit)
     .populate(populate);

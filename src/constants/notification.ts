@@ -1,1 +1,1 @@
-export const MAX_LATEST_NOTIFICATIONS = 5;
+export const MAX_NOTIFICATIONS_BATCH = 20;

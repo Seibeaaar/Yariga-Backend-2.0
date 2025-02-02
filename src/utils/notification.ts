@@ -2,6 +2,8 @@ import { NOTIFICATION_TYPE } from "@/types/notification";
 import { User, UserDocument } from "@/types/user";
 import { getUserFullName } from "./user";
 import { AgreementDocument } from "@/types/agreement";
+import { MAX_NOTIFICATIONS_BATCH } from "@/constants/notification";
+import { isDefined } from "./common";
 import { getAgreementCounterpart } from "./agreement/shared";
 import Notification from "@/models/Notification";
 
@@ -44,4 +46,26 @@ export const createAgreementNotification = async (
   await notification.save();
 
   return notification;
+};
+
+export const makeNotificationKeysetRequest = async (
+  userId: string,
+  isRead: boolean,
+  lastCreatedAt?: string,
+) => {
+  const notifications = await Notification.find({
+    receiver: userId,
+    isRead,
+    ...(isDefined(lastCreatedAt) && {
+      createdAt: {
+        $lt: lastCreatedAt,
+      },
+    }),
+  })
+    .sort({
+      createdAt: -1,
+    })
+    .limit(MAX_NOTIFICATIONS_BATCH);
+
+  return notifications;
 };

@@ -1,4 +1,4 @@
-import { FilterQuery, Model, PopulateOptions, SortOrder } from "mongoose";
+import { FilterQuery, Model, PopulateOptions } from "mongoose";
 
 export type PaginatedRequestConfig<T> = {
   model: Model<T>;
@@ -6,5 +6,4 @@ export type PaginatedRequestConfig<T> = {
   page?: string;
   totalLimit?: number;
   populate?: PopulateOptions[];
-  sort?: { [key: string]: SortOrder };
 };
