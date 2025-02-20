@@ -53,7 +53,7 @@ export const makeNotificationKeysetRequest = async (
   isRead: boolean,
   lastCreatedAt?: string,
 ) => {
-  const notifications = await Notification.find({
+  const query = {
     receiver: userId,
     isRead,
     ...(isDefined(lastCreatedAt) && {
@@ -61,11 +61,17 @@ export const makeNotificationKeysetRequest = async (
         $lt: lastCreatedAt,
       },
     }),
-  })
+  };
+  const notifications = await Notification.find(query)
     .sort({
       createdAt: -1,
     })
     .limit(MAX_NOTIFICATIONS_BATCH);
 
-  return notifications;
+  const total = await Notification.countDocuments(query);
+
+  return {
+    notifications,
+    isNextRequestAvailable: total > MAX_NOTIFICATIONS_BATCH,
+  };
 };
