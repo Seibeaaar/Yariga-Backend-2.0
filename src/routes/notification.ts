@@ -9,10 +9,12 @@ const NotificationRouter = Router();
 NotificationRouter.get("/new", verifyJWToken, async (req, res) => {
   try {
     const { userId } = res.locals;
+    const { lastCreatedAt } = req.query;
 
     const notificationsFetchResult = await makeNotificationKeysetRequest(
       userId,
       false,
+      lastCreatedAt as string | undefined,
     );
 
     res.status(200).send(notificationsFetchResult);
@@ -24,10 +26,12 @@ NotificationRouter.get("/new", verifyJWToken, async (req, res) => {
 NotificationRouter.get("/read", verifyJWToken, async (req, res) => {
   try {
     const { userId } = res.locals;
+    const { lastCreatedAt } = req.query;
 
     const notificationsFetchResult = await makeNotificationKeysetRequest(
       userId,
       true,
+      lastCreatedAt as string | undefined,
     );
 
     res.status(200).send(notificationsFetchResult);
@@ -38,8 +42,7 @@ NotificationRouter.get("/read", verifyJWToken, async (req, res) => {
 
 NotificationRouter.post("/read", verifyJWToken, async (req, res) => {
   try {
-    const { notificationIds, lastCreatedAt } = req.body;
-    const { userId } = res.locals;
+    const { notificationIds } = req.body;
 
     const bulkOperations = notificationIds.map((_id: string) => ({
       updateOne: {
@@ -50,13 +53,11 @@ NotificationRouter.post("/read", verifyJWToken, async (req, res) => {
 
     await Notification.bulkWrite(bulkOperations);
 
-    const notificationsFetchResult = await makeNotificationKeysetRequest(
-      userId,
-      false,
-      lastCreatedAt,
-    );
-
-    res.status(200).send(notificationsFetchResult);
+    res
+      .status(200)
+      .send(
+        `Notifications ${notificationIds.join(", ")} have been read successfully.`,
+      );
   } catch (e) {
     res.status(500).send(generateErrorMesaage(e));
   }
@@ -77,7 +78,7 @@ NotificationRouter.post("/readAll", verifyJWToken, async (req, res) => {
   }
 });
 
-NotificationRouter.post("/clear", verifyJWToken, async (req, res) => {
+NotificationRouter.delete("/clear", verifyJWToken, async (req, res) => {
   try {
     const { userId } = res.locals;
 
