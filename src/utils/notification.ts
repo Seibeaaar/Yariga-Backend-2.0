@@ -1,10 +1,11 @@
-import { NOTIFICATION_TYPE } from "@/types/notification";
-import { User, UserDocument } from "@/types/user";
+import {
+  NOTIFICATION_TYPE,
+  SendNotificationConfig,
+} from "@/types/notification";
+import { USER_ROLE, UserDocument } from "@/types/user";
 import { getUserFullName } from "./user";
-import { AgreementDocument } from "@/types/agreement";
 import { MAX_NOTIFICATIONS_BATCH } from "@/constants/notification";
 import { isDefined } from "./common";
-import { getAgreementCounterpart } from "./agreement/shared";
 import Notification from "@/models/Notification";
 
 const generateNotificationContent = (
@@ -28,24 +29,16 @@ const generateNotificationContent = (
   }
 };
 
-export const createAgreementNotification = async (
-  type: NOTIFICATION_TYPE,
-  user: User,
-  agreement: AgreementDocument,
-) => {
-  const receiver =
-    type === NOTIFICATION_TYPE.NewAgreement
-      ? agreement.landlord
-      : getAgreementCounterpart(agreement, user.id);
+export const sendNotification = async (config: SendNotificationConfig) => {
+  const { sender, type, landlord, tenant } = config;
+  const receiver = sender.role === USER_ROLE.Tenant ? landlord : tenant;
   const notification = new Notification({
-    sender: user.id,
+    sender: sender.id,
     receiver,
-    content: generateNotificationContent(type, user),
+    content: generateNotificationContent(type, sender),
     type,
   });
   await notification.save();
-
-  return notification;
 };
 
 export const makeNotificationKeysetRequest = async (

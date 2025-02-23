@@ -40,7 +40,7 @@ import {
   calculateTotalByMonth,
   calculateTotalByYears,
 } from "@/utils/agreement/totals";
-import { createAgreementNotification } from "@/utils/notification";
+import { sendNotification } from "@/utils/notification";
 import { NOTIFICATION_TYPE } from "@/types/notification";
 
 const AgreementRouter = Router();
@@ -175,11 +175,12 @@ AgreementRouter.post(
       });
       await agreement.save();
 
-      await createAgreementNotification(
-        NOTIFICATION_TYPE.NewAgreement,
-        user,
-        agreement,
-      );
+      await sendNotification({
+        sender: user,
+        landlord,
+        tenant: user.id,
+        type: NOTIFICATION_TYPE.NewAgreement,
+      });
 
       const expandedAgreement = await populateAgreement(agreement);
 
@@ -232,11 +233,12 @@ AgreementRouter.put(
         },
       );
 
-      await createAgreementNotification(
-        NOTIFICATION_TYPE.AgreementAccepted,
-        user,
-        acceptedAgreement!,
-      );
+      await sendNotification({
+        sender: user,
+        landlord: agreement.landlord,
+        tenant: agreement.tenant,
+        type: NOTIFICATION_TYPE.AgreementAccepted,
+      });
 
       const expandedAgreement = await populateAgreement(acceptedAgreement);
 
@@ -270,11 +272,12 @@ AgreementRouter.put(
 
       const expandedAgreement = await populateAgreement(declinedAgreement);
 
-      await createAgreementNotification(
-        NOTIFICATION_TYPE.AgreementDeclined,
-        user,
-        declinedAgreement!,
-      );
+      await sendNotification({
+        sender: user,
+        landlord: agreement.landlord,
+        tenant: agreement.tenant,
+        type: NOTIFICATION_TYPE.AgreementDeclined,
+      });
 
       res.status(200).send(expandedAgreement);
     } catch (e) {
@@ -295,9 +298,9 @@ AgreementRouter.post(
       const { user, agreement } = res.locals;
 
       const isCallerTenant = user.role === USER_ROLE.Tenant;
-      const [tenant, landlord] = isCallerTenant
-        ? [user.id, agreement.landlord]
-        : [agreement.tenant, user.id];
+
+      const tenant = isCallerTenant ? user.id : agreement.tenant;
+      const landlord = isCallerTenant ? agreement.landlord : user.id;
 
       const counterAgreement = new Agreement({
         ...req.body,
@@ -321,11 +324,12 @@ AgreementRouter.post(
         },
       );
 
-      await createAgreementNotification(
-        NOTIFICATION_TYPE.AgreementCountered,
-        user,
-        counterAgreement!,
-      );
+      await sendNotification({
+        sender: user,
+        landlord,
+        tenant,
+        type: NOTIFICATION_TYPE.AgreementCountered,
+      });
 
       const expandedAgreement = await populateAgreement(counterAgreement);
 

@@ -117,7 +117,7 @@ PropertyRouter.post(
   fetchUserFromTokenData,
   checkIfLandlord,
   checkPropertyNumberLimit,
-  upload.array("photos"),
+  upload.array("photos[]"),
   validatePropertyRequestBody,
   async (req, res) => {
     try {
