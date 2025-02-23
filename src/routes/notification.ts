@@ -40,7 +40,7 @@ NotificationRouter.get("/read", verifyJWToken, async (req, res) => {
   }
 });
 
-NotificationRouter.post("/read", verifyJWToken, async (req, res) => {
+NotificationRouter.put("/read", verifyJWToken, async (req, res) => {
   try {
     const { notificationIds } = req.body;
 
@@ -63,7 +63,7 @@ NotificationRouter.post("/read", verifyJWToken, async (req, res) => {
   }
 });
 
-NotificationRouter.post("/readAll", verifyJWToken, async (req, res) => {
+NotificationRouter.put("/readAll", verifyJWToken, async (req, res) => {
   try {
     const { userId } = res.locals;
 
@@ -78,7 +78,7 @@ NotificationRouter.post("/readAll", verifyJWToken, async (req, res) => {
   }
 });
 
-NotificationRouter.delete("/clear", verifyJWToken, async (req, res) => {
+NotificationRouter.delete("/deleteRead", verifyJWToken, async (req, res) => {
   try {
     const { userId } = res.locals;
 
