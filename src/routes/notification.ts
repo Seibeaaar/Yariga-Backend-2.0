@@ -1,7 +1,7 @@
 import { verifyJWToken } from "@/middlewares/common";
 import Notification from "@/models/Notification";
 import { generateErrorMesaage } from "@/utils/common";
-import { makeNotificationKeysetRequest } from "@/utils/notification";
+import { retrieveNotificationsBatch } from "@/utils/notification";
 import { Router } from "express";
 
 const NotificationRouter = Router();
@@ -11,11 +11,11 @@ NotificationRouter.get("/new", verifyJWToken, async (req, res) => {
     const { userId } = res.locals;
     const { lastCreatedAt } = req.query;
 
-    const notificationsFetchResult = await makeNotificationKeysetRequest(
-      userId,
-      false,
-      lastCreatedAt as string | undefined,
-    );
+    const notificationsFetchResult = await retrieveNotificationsBatch({
+      receiver: userId,
+      lastCreatedAt: lastCreatedAt as string | undefined,
+      isRead: false,
+    });
 
     res.status(200).send(notificationsFetchResult);
   } catch (e) {
@@ -28,11 +28,11 @@ NotificationRouter.get("/read", verifyJWToken, async (req, res) => {
     const { userId } = res.locals;
     const { lastCreatedAt } = req.query;
 
-    const notificationsFetchResult = await makeNotificationKeysetRequest(
-      userId,
-      true,
-      lastCreatedAt as string | undefined,
-    );
+    const notificationsFetchResult = await retrieveNotificationsBatch({
+      receiver: userId,
+      lastCreatedAt: lastCreatedAt as string | undefined,
+      isRead: true,
+    });
 
     res.status(200).send(notificationsFetchResult);
   } catch (e) {

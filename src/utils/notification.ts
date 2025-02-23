@@ -1,4 +1,5 @@
 import {
+  GetNotificationsConfig,
   NOTIFICATION_TYPE,
   SendNotificationConfig,
 } from "@/types/notification";
@@ -41,13 +42,13 @@ export const sendNotification = async (config: SendNotificationConfig) => {
   await notification.save();
 };
 
-export const makeNotificationKeysetRequest = async (
-  userId: string,
-  isRead: boolean,
-  lastCreatedAt?: string,
+export const retrieveNotificationsBatch = async (
+  config: GetNotificationsConfig,
 ) => {
+  const { receiver, isRead, lastCreatedAt } = config;
+
   const query = {
-    receiver: userId,
+    receiver,
     isRead,
     ...(isDefined(lastCreatedAt) && {
       createdAt: {

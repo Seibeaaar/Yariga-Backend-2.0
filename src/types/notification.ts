@@ -18,3 +18,9 @@ export type SendNotificationConfig = {
   landlord: string;
   tenant: string;
 };
+
+export type GetNotificationsConfig = {
+  receiver: string;
+  lastCreatedAt?: string;
+  isRead: boolean;
+};
