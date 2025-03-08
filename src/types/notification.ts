@@ -1,5 +1,6 @@
 import { NotificationSchema } from "@/models/Notification";
 import { InferSchemaType } from "mongoose";
+import { User } from "./user";
 
 export enum NOTIFICATION_TYPE {
   NewMessage = "new_message",
@@ -10,3 +11,16 @@ export enum NOTIFICATION_TYPE {
 }
 
 export type NotificationDocument = InferSchemaType<typeof NotificationSchema>;
+
+export type SendNotificationConfig = {
+  type: NOTIFICATION_TYPE;
+  sender: User;
+  landlord: string;
+  tenant: string;
+};
+
+export type GetNotificationsConfig = {
+  receiver: string;
+  lastCreatedAt?: string;
+  isRead: boolean;
+};

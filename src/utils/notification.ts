@@ -1,8 +1,15 @@
-import { NOTIFICATION_TYPE } from "@/types/notification";
-import { UserDocument } from "@/types/user";
+import {
+  GetNotificationsConfig,
+  NOTIFICATION_TYPE,
+  SendNotificationConfig,
+} from "@/types/notification";
+import { USER_ROLE, UserDocument } from "@/types/user";
 import { getUserFullName } from "./user";
+import { MAX_NOTIFICATIONS_BATCH } from "@/constants/notification";
+import { isDefined } from "./common";
+import Notification from "@/models/Notification";
 
-export const generateNotificationContent = (
+const generateNotificationContent = (
   type: NOTIFICATION_TYPE,
   sender: UserDocument,
 ) => {
@@ -21,4 +28,44 @@ export const generateNotificationContent = (
     default:
       return null;
   }
+};
+
+export const sendNotification = async (config: SendNotificationConfig) => {
+  const { sender, type, landlord, tenant } = config;
+  const receiver = sender.role === USER_ROLE.Tenant ? landlord : tenant;
+  const notification = new Notification({
+    sender: sender.id,
+    receiver,
+    content: generateNotificationContent(type, sender),
+    type,
+  });
+  await notification.save();
+};
+
+export const retrieveNotificationsBatch = async (
+  config: GetNotificationsConfig,
+) => {
+  const { receiver, isRead, lastCreatedAt } = config;
+
+  const query = {
+    receiver,
+    isRead,
+    ...(isDefined(lastCreatedAt) && {
+      createdAt: {
+        $lt: lastCreatedAt,
+      },
+    }),
+  };
+  const notifications = await Notification.find(query)
+    .sort({
+      createdAt: -1,
+    })
+    .limit(MAX_NOTIFICATIONS_BATCH);
+
+  const total = await Notification.countDocuments(query);
+
+  return {
+    notifications,
+    isNextRequestAvailable: total > MAX_NOTIFICATIONS_BATCH,
+  };
 };

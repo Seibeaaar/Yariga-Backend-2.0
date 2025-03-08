@@ -23,7 +23,7 @@ export const AGGREGATE_CONFIG_BY_INTERVAL: IntervalConfig = {
   },
   [AGREEMENT_TOTAL_INTERVAL.Weekly]: {
     unit: "week",
-    format: "%Y-WW",
+    format: "%V",
   },
   [AGREEMENT_TOTAL_INTERVAL.Monthly]: {
     unit: "month",

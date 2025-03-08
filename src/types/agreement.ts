@@ -1,6 +1,7 @@
 import { AgreementSchema } from "@/models/Agreement";
 import { InferSchemaType } from "mongoose";
 import { OpUnitType } from "dayjs";
+import { PROPERTY_PAYMENT_PERIOD } from "./property";
 
 export enum AGREEMENT_TYPE {
   Sale = "sale",
@@ -33,4 +34,18 @@ export type IntervalConfig = {
     unit: OpUnitType;
     format: string;
   };
+};
+
+export enum AGREEMENT_CREATOR_PARAM {
+  Me = "me",
+  Others = "others",
+  All = "all",
+}
+
+export type FilterAgreementsRequest = {
+  status: AGREEMENT_STATUS[];
+  type: AGREEMENT_TYPE[];
+  paymentPeriod: PROPERTY_PAYMENT_PERIOD[];
+  createdBefore?: string;
+  createdAfter?: string;
 };

@@ -1,7 +1,8 @@
 import jwt from "jsonwebtoken";
 import { COMMON_SERVER_ERROR } from "@/constants/common";
-import { Document, FilterQuery, Model, Types } from "mongoose";
+import { Document, Types } from "mongoose";
 import { PAGINATION_LIMIT } from "@/constants/common";
+import { PaginatedRequestConfig } from "@/types/common";
 
 export const generateErrorMesaage = (e: unknown) => {
   if (e instanceof Error) {
@@ -34,20 +35,33 @@ const processPageQueryParam = (pageParam: string | undefined): number => {
   return +pageParam;
 };
 
-export const makePaginatedRequest = async <T>(
-  model: Model<T>,
-  query: FilterQuery<object>,
-  page?: string,
-  totalLimit?: number,
-) => {
+const calculatePagination = (page?: string, totalLimit?: number) => {
   const pageNumber = processPageQueryParam(page);
   const startIndex = (pageNumber - 1) * PAGINATION_LIMIT;
+  const remainingLimit = totalLimit
+    ? Math.max(0, totalLimit - startIndex)
+    : PAGINATION_LIMIT;
+  const effectivePageLimit = Math.min(PAGINATION_LIMIT, remainingLimit);
+
+  return { pageNumber, startIndex, effectivePageLimit };
+};
+
+export const makePaginatedRequest = async <T>(
+  config: PaginatedRequestConfig<T>,
+) => {
+  const { page, model, query, totalLimit, populate = [] } = config;
+  const { pageNumber, startIndex, effectivePageLimit } = calculatePagination(
+    page,
+    totalLimit,
+  );
+
   const results = await model
     .find(query)
-    .limit(totalLimit ?? Number.MAX_SAFE_INTEGER)
     .skip(startIndex)
-    .limit(PAGINATION_LIMIT);
-  const total = await model.find(query).countDocuments();
+    .limit(effectivePageLimit)
+    .populate(populate);
+
+  const total = await model.countDocuments(query);
 
   return {
     total,
@@ -58,3 +72,19 @@ export const makePaginatedRequest = async <T>(
 };
 
 export const castToObjectId = (id: string) => new Types.ObjectId(id);
+
+export const isDefined = <T>(
+  value: T | null | undefined,
+): value is NonNullable<T> => {
+  return value !== null && value !== undefined;
+};
+
+export const convertQueryParamToBoolean = (queryParam?: string) => {
+  return queryParam === "true";
+};
+
+export const valueOrDefault = <T>(value: T | T[], fallback: T | T[]) => {
+  const isEmptyArray = Array.isArray(value) && value.length === 0;
+  if (!isDefined(value) || isEmptyArray) return fallback;
+  return value;
+};

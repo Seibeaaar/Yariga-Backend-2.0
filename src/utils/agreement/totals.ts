@@ -1,8 +1,10 @@
 import dayjs from "dayjs";
 import week from "dayjs/plugin/weekOfYear";
+import advancedFormat from "dayjs/plugin/advancedFormat";
 import {
   AGREEMENT_STATUS,
   AGREEMENT_TOTAL_INTERVAL,
+  AGREEMENT_TYPE,
   TotalByInterval,
 } from "@/types/agreement";
 import Agreement from "@/models/Agreement";
@@ -11,15 +13,29 @@ import {
   AGGREGATE_CONFIG_BY_INTERVAL,
   DAY_STATS_THRESHOLD,
   MONTH_STATS_THRESHOLD,
-  WEEK_STATS_THRESHOLD,
   YEAR_STATS_THRESHOLD,
+  WEEK_STATS_THRESHOLD,
 } from "@/constants/agreement";
-import { castToObjectId } from "./common";
+import { castToObjectId } from "../common";
+import { PROPERTY_PAYMENT_PERIOD } from "@/types/property";
 
 dayjs.extend(week);
+dayjs.extend(advancedFormat);
 
-export const getAgreementUniqueNumber = () => {
-  return Math.floor(Math.random() * (999999 - 100000 + 1)) + 100000;
+export const calculateTotalByWeeks = async (user: User) => {
+  const currentWeek = dayjs().endOf("week");
+  const weeks = Array.from({ length: WEEK_STATS_THRESHOLD }).map((_, i) => {
+    const week = currentWeek.subtract(WEEK_STATS_THRESHOLD - (i + 1), "weeks");
+    return week.format("YYYY-MM-DD");
+  });
+
+  const totalByWeeks = await aggregateTotalsByInterval(
+    weeks,
+    user,
+    AGREEMENT_TOTAL_INTERVAL.Weekly,
+  );
+
+  return totalByWeeks;
 };
 
 export const calculateTotalByMonth = async (user: User) => {
@@ -55,22 +71,6 @@ export const calculateTotalByDays = async (user: User) => {
   );
 
   return totalByDays;
-};
-
-export const calculateTotalByWeeks = async (user: User) => {
-  const currentWeek = dayjs().endOf("week");
-  const weeks = Array.from({ length: WEEK_STATS_THRESHOLD }).map((_, i) => {
-    const week = currentWeek.subtract(WEEK_STATS_THRESHOLD - (i + 1), "weeks");
-    return week.format("YYYY-MM-DD");
-  });
-
-  const totalByWeeks = await aggregateTotalsByInterval(
-    weeks,
-    user,
-    AGREEMENT_TOTAL_INTERVAL.Weekly,
-  );
-
-  return totalByWeeks;
 };
 
 export const calculateTotalByYears = async (user: User) => {
@@ -113,16 +113,86 @@ const aggregateTotalsByInterval = async (
 ) => {
   const userId = castToObjectId(user.id);
   const { unit, format } = AGGREGATE_CONFIG_BY_INTERVAL[intervalUnit];
+  const intervalStart = dayjs(dates[0]).startOf(unit).toISOString();
+  const intervalEnd = dayjs(dates[dates.length - 1])
+    .endOf(unit)
+    .toISOString();
+
   const result = await Agreement.aggregate([
     {
       $match: {
         [user.role === USER_ROLE.Landlord ? "landlord" : "tenant"]: userId,
         status: AGREEMENT_STATUS.Accepted,
         startDate: {
-          $gte: dayjs(dates[0]).startOf(unit).toISOString(),
-          $lte: dayjs(dates[dates.length - 1])
-            .endOf(unit)
-            .toISOString(),
+          $lte: intervalEnd,
+          $gte: intervalStart,
+        },
+      },
+    },
+    {
+      $project: {
+        startDate: 1,
+        amount: 1,
+        paymentPeriod: 1,
+        type: 1,
+        iterations: {
+          $cond: {
+            if: {
+              $eq: ["$type", AGREEMENT_TYPE.Rent],
+            },
+            then: {
+              $dateDiff: {
+                startDate: {
+                  $max: [{ $toDate: intervalStart }, { $toDate: "$startDate" }],
+                },
+                endDate: {
+                  $min: [{ $toDate: "$endDate" }, { $toDate: intervalEnd }],
+                },
+                unit: {
+                  $switch: {
+                    branches: [
+                      {
+                        case: {
+                          $eq: [
+                            "$paymentPeriod",
+                            PROPERTY_PAYMENT_PERIOD.Monthly,
+                          ],
+                        },
+                        then: "month",
+                      },
+                      {
+                        case: {
+                          $eq: [
+                            "$paymentPeriod",
+                            PROPERTY_PAYMENT_PERIOD.Yearly,
+                          ],
+                        },
+                        then: "year",
+                      },
+                      {
+                        case: {
+                          $eq: [
+                            "$paymentPeriod",
+                            PROPERTY_PAYMENT_PERIOD.Weekly,
+                          ],
+                        },
+                        then: "week",
+                      },
+                    ],
+                    default: "day",
+                  },
+                },
+              },
+            },
+            else: 1,
+          },
+        },
+      },
+    },
+    {
+      $addFields: {
+        totalAmount: {
+          $multiply: ["$iterations", "$amount"],
         },
       },
     },
@@ -131,12 +201,10 @@ const aggregateTotalsByInterval = async (
         _id: {
           $dateToString: {
             format,
-            date: {
-              $dateFromString: { dateString: "$startDate", format: "%Y-%m-%d" },
-            },
+            date: { $toDate: "$startDate" },
           },
         },
-        totalAmount: { $sum: "$amount" },
+        totalAmount: { $sum: "$totalAmount" },
       },
     },
     {
@@ -145,7 +213,8 @@ const aggregateTotalsByInterval = async (
   ]);
 
   return dates.reduce((acc: TotalByInterval[], date) => {
-    const periodInfo = result.find((r) => r._id === date);
+    const comparedDate = unit === "week" ? dayjs(date).format("ww") : date;
+    const periodInfo = result.find((r) => r._id === comparedDate);
     const totalValue = periodInfo ? periodInfo.totalAmount : 0;
     const periodName = getNameByIntervalUnit(intervalUnit, date);
     acc.push({

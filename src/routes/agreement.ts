@@ -2,11 +2,12 @@ import {
   checkAgreementIdParam,
   checkIsAgreementCounterpart,
   checkIsAgreementOwner,
-  validateAgreementEntities,
+  validateAgreementProperty,
   validateAgreementFilters,
-  validateAgreementRequestBody,
-  validateArchivedAgreementFilters,
+  validateAgreementCreate,
+  validateAgreementUpdateDetails,
   validateGetTotalByIntervalRequest,
+  checkIsAgreementPart,
 } from "@/middlewares/agreement";
 import {
   checkIfTenant,
@@ -16,26 +17,31 @@ import {
 import Agreement from "@/models/Agreement";
 import Property from "@/models/Property";
 import User from "@/models/User";
-import {
-  AGREEMENT_STATUS,
-  AGREEMENT_TOTAL_INTERVAL,
-  AGREEMENT_TYPE,
-} from "@/types/agreement";
+import { AGREEMENT_STATUS, AGREEMENT_TOTAL_INTERVAL } from "@/types/agreement";
 import { PROPERTY_STATUS } from "@/types/property";
 import { USER_ROLE } from "@/types/user";
-import { generateErrorMesaage, makePaginatedRequest } from "@/utils/common";
 import {
-  calculateTotalByMonth,
-  calculateTotalByWeeks,
-  calculateTotalByYears,
+  convertQueryParamToBoolean,
+  generateErrorMesaage,
+  makePaginatedRequest,
+} from "@/utils/common";
+import {
   getAgreementUniqueNumber,
-} from "@/utils/agreement";
+  populateAgreement,
+} from "@/utils/agreement/shared";
 import { Router } from "express";
 import {
-  ARCHIVED_AGREEMENT_STATUSES,
-  NON_ARCHIVED_AGREEMENT_STATUSES,
-} from "@/constants/agreement";
-import { calculateTotalByDays } from "@/utils/agreement";
+  buildAgreementFilterQuery,
+  buildAgreementGetQuery,
+} from "@/utils/agreement/filter";
+import {
+  calculateTotalByDays,
+  calculateTotalByWeeks,
+  calculateTotalByMonth,
+  calculateTotalByYears,
+} from "@/utils/agreement/totals";
+import { sendNotification } from "@/utils/notification";
+import { NOTIFICATION_TYPE } from "@/types/notification";
 
 const AgreementRouter = Router();
 
@@ -43,26 +49,25 @@ AgreementRouter.get(
   "/",
   verifyJWToken,
   fetchUserFromTokenData,
-  validateAgreementFilters,
   async (req, res) => {
     try {
       const { user } = res.locals;
-      const query = {
-        [user.role === USER_ROLE.Landlord ? "landlord" : "tenant"]: user.id,
-        isArchived: false,
-        status: {
-          $in: req.query.status ?? NON_ARCHIVED_AGREEMENT_STATUSES,
-        },
-        type: {
-          $in: req.query.type ?? Object.values(AGREEMENT_TYPE),
-        },
-      };
-
-      const paginatedResponse = await makePaginatedRequest(
-        Agreement,
-        query,
-        req.query.page as string | undefined,
+      const query = buildAgreementGetQuery(
+        user,
+        convertQueryParamToBoolean(req.query.isArchived as string | undefined),
+        req.query.createdBy as string | undefined,
       );
+
+      const paginatedResponse = await makePaginatedRequest({
+        model: Agreement,
+        query,
+        page: req.query.page as string | undefined,
+        populate: [
+          {
+            path: "property",
+          },
+        ],
+      });
 
       res.status(200).send(paginatedResponse);
     } catch (e) {
@@ -72,29 +77,37 @@ AgreementRouter.get(
 );
 
 AgreementRouter.get(
-  "/archived",
+  "/search",
   verifyJWToken,
   fetchUserFromTokenData,
-  validateArchivedAgreementFilters,
   async (req, res) => {
     try {
+      const { q = "", page, createdBy, isArchived } = req.query;
       const { user } = res.locals;
+
+      const getQuery = buildAgreementGetQuery(
+        user,
+        convertQueryParamToBoolean(isArchived as string | undefined),
+        createdBy as string | undefined,
+      );
+
       const query = {
-        [user.role === USER_ROLE.Landlord ? "landlord" : "tenant"]: user.id,
-        isArchived: true,
-        status: {
-          $in: req.query.status ?? ARCHIVED_AGREEMENT_STATUSES,
+        uniqueNumber: {
+          $regex: new RegExp(q as string, "i"),
         },
-        type: {
-          $in: req.query.type ?? Object.values(AGREEMENT_TYPE),
-        },
+        ...getQuery,
       };
 
-      const paginatedResponse = await makePaginatedRequest(
-        Agreement,
+      const paginatedResponse = await makePaginatedRequest({
+        model: Agreement,
         query,
-        req.query.page as string | undefined,
-      );
+        page: page as string | undefined,
+        populate: [
+          {
+            path: "property",
+          },
+        ],
+      });
 
       res.status(200).send(paginatedResponse);
     } catch (e) {
@@ -103,45 +116,75 @@ AgreementRouter.get(
   },
 );
 
-AgreementRouter.get("/search", verifyJWToken, async (req, res) => {
-  try {
-    const { q = "", page } = req.query;
+AgreementRouter.post(
+  "/filter",
+  verifyJWToken,
+  fetchUserFromTokenData,
+  validateAgreementFilters,
+  async (req, res) => {
+    try {
+      const { user, isArchived } = res.locals;
 
-    const query = {
-      uniqueNumber: {
-        $regex: new RegExp(q as string, "i"),
-      },
-    };
+      const getQuery = buildAgreementGetQuery(
+        user,
+        isArchived,
+        req.query.createdBy as string | undefined,
+      );
 
-    const paginatedResponse = await makePaginatedRequest(
-      Agreement,
-      query,
-      page as string | undefined,
-    );
+      const filterQuery = buildAgreementFilterQuery(isArchived, req.body);
 
-    res.status(200).send(paginatedResponse);
-  } catch (e) {
-    res.status(500).send(generateErrorMesaage(e));
-  }
-});
+      const combinedQuery = {
+        ...getQuery,
+        ...filterQuery,
+      };
+
+      const paginatedResponse = await makePaginatedRequest({
+        model: Agreement,
+        query: combinedQuery,
+        page: req.query.page as string | undefined,
+        populate: [
+          {
+            path: "property",
+          },
+        ],
+      });
+
+      res.status(200).send(paginatedResponse);
+    } catch (e) {
+      res.status(500).send(generateErrorMesaage(e));
+    }
+  },
+);
 
 AgreementRouter.post(
   "/create",
   verifyJWToken,
   fetchUserFromTokenData,
   checkIfTenant,
-  validateAgreementRequestBody,
-  validateAgreementEntities,
+  validateAgreementCreate,
+  validateAgreementProperty,
   async (req, res) => {
     try {
-      const { userId } = res.locals;
+      const { user, landlord } = res.locals;
       const agreement = new Agreement({
         ...req.body,
-        creator: userId,
+        creator: user.id,
+        tenant: user.id,
+        landlord,
         uniqueNumber: getAgreementUniqueNumber(),
       });
       await agreement.save();
-      res.status(201).send(agreement);
+
+      await sendNotification({
+        sender: user,
+        landlord,
+        tenant: user.id,
+        type: NOTIFICATION_TYPE.NewAgreement,
+      });
+
+      const expandedAgreement = await populateAgreement(agreement);
+
+      res.status(201).send(expandedAgreement);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }
@@ -151,11 +194,12 @@ AgreementRouter.post(
 AgreementRouter.put(
   "/:id/accept",
   verifyJWToken,
+  fetchUserFromTokenData,
   checkAgreementIdParam,
   checkIsAgreementCounterpart,
   async (req, res) => {
     try {
-      const { agreement } = res.locals;
+      const { agreement, user } = res.locals;
       const acceptedAgreement = await Agreement.findByIdAndUpdate(
         agreement.id,
         {
@@ -189,7 +233,16 @@ AgreementRouter.put(
         },
       );
 
-      res.status(200).send(acceptedAgreement);
+      await sendNotification({
+        sender: user,
+        landlord: agreement.landlord,
+        tenant: agreement.tenant,
+        type: NOTIFICATION_TYPE.AgreementAccepted,
+      });
+
+      const expandedAgreement = await populateAgreement(acceptedAgreement);
+
+      res.status(200).send(expandedAgreement);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }
@@ -199,11 +252,12 @@ AgreementRouter.put(
 AgreementRouter.put(
   "/:id/decline",
   verifyJWToken,
+  fetchUserFromTokenData,
   checkAgreementIdParam,
   checkIsAgreementCounterpart,
   async (req, res) => {
     try {
-      const { agreement } = res.locals;
+      const { agreement, user } = res.locals;
       const declinedAgreement = await Agreement.findByIdAndUpdate(
         agreement.id,
         {
@@ -216,7 +270,16 @@ AgreementRouter.put(
         },
       );
 
-      res.status(200).send(declinedAgreement);
+      const expandedAgreement = await populateAgreement(declinedAgreement);
+
+      await sendNotification({
+        sender: user,
+        landlord: agreement.landlord,
+        tenant: agreement.tenant,
+        type: NOTIFICATION_TYPE.AgreementDeclined,
+      });
+
+      res.status(200).send(expandedAgreement);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }
@@ -226,17 +289,26 @@ AgreementRouter.put(
 AgreementRouter.post(
   "/:id/counter",
   verifyJWToken,
+  fetchUserFromTokenData,
   checkAgreementIdParam,
   checkIsAgreementCounterpart,
-  validateAgreementRequestBody,
-  validateAgreementEntities,
+  validateAgreementUpdateDetails,
   async (req, res) => {
     try {
-      const { userId, agreement } = res.locals;
+      const { user, agreement } = res.locals;
+
+      const isCallerTenant = user.role === USER_ROLE.Tenant;
+
+      const tenant = isCallerTenant ? user.id : agreement.tenant;
+      const landlord = isCallerTenant ? agreement.landlord : user.id;
+
       const counterAgreement = new Agreement({
         ...req.body,
-        creator: userId,
+        creator: user.id,
         parent: agreement.id,
+        property: agreement.property,
+        tenant,
+        landlord,
         uniqueNumber: getAgreementUniqueNumber(),
       });
 
@@ -252,7 +324,16 @@ AgreementRouter.post(
         },
       );
 
-      res.status(201).send(counterAgreement);
+      await sendNotification({
+        sender: user,
+        landlord,
+        tenant,
+        type: NOTIFICATION_TYPE.AgreementCountered,
+      });
+
+      const expandedAgreement = await populateAgreement(counterAgreement);
+
+      res.status(201).send(expandedAgreement);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }
@@ -288,13 +369,12 @@ AgreementRouter.delete(
 );
 
 AgreementRouter.put(
-  "/:id/update",
+  "/:id",
   verifyJWToken,
   fetchUserFromTokenData,
   checkAgreementIdParam,
   checkIsAgreementOwner,
-  validateAgreementRequestBody,
-  validateAgreementEntities,
+  validateAgreementUpdateDetails,
   async (req, res) => {
     try {
       const { agreement } = res.locals;
@@ -302,8 +382,9 @@ AgreementRouter.put(
         ...req.body,
         updatedAt: new Date().toISOString(),
       });
+      const expandedAgreement = await populateAgreement(updatedAgreement);
 
-      res.status(200).send(updatedAgreement);
+      res.status(200).send(expandedAgreement);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }
@@ -356,6 +437,24 @@ AgreementRouter.get(
         .limit(5);
 
       res.status(200).send(latestAgreements);
+    } catch (e) {
+      res.status(500).send(generateErrorMesaage(e));
+    }
+  },
+);
+
+AgreementRouter.get(
+  "/:id",
+  verifyJWToken,
+  checkAgreementIdParam,
+  checkIsAgreementPart,
+  async (req, res) => {
+    try {
+      const { agreement } = res.locals;
+
+      const expanedAgreement = await populateAgreement(agreement);
+
+      res.status(200).send(expanedAgreement);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }

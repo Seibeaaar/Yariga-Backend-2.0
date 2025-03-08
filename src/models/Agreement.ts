@@ -1,5 +1,6 @@
 import { MAX_SALE_AMOUNT, MIN_RENT_AMOUNT } from "@/constants/property";
 import { AGREEMENT_STATUS, AGREEMENT_TYPE } from "@/types/agreement";
+import { PROPERTY_PAYMENT_PERIOD } from "@/types/property";
 import { Schema, model } from "mongoose";
 
 export const AgreementSchema = new Schema({
@@ -67,6 +68,13 @@ export const AgreementSchema = new Schema({
   updatedAt: {
     type: String,
     default: null,
+  },
+  paymentPeriod: {
+    type: String,
+    required: true,
+    enum: {
+      values: Object.values(PROPERTY_PAYMENT_PERIOD),
+    },
   },
 });
 
