@@ -13,11 +13,12 @@ import {
   checkPropertyNumberLimit,
   checkPropertyOwnership,
   checkPropertySearchQuery,
-  validatePropertyRequestBody,
+  validateCreatePropertyRequest,
+  validateUpdatePropertyRequest,
 } from "@/middlewares/property";
 import { PROPERTY_STATUS, PropertyDoc } from "@/types/property";
 import User from "@/models/User";
-import { upload, uploadPhotoToAWS } from "@/utils/media";
+import { deleteAWSPhotos, upload, uploadPhotosToAWS } from "@/utils/media";
 import { RECOMMENDATIONS_TOTAL_LIMIT } from "@/constants/common";
 import { buildPropertyFiltersQuery } from "@/utils/property";
 import { validatePropertyPreferences } from "@/middlewares/user";
@@ -118,25 +119,23 @@ PropertyRouter.post(
   checkIfLandlord,
   checkPropertyNumberLimit,
   upload.array("photos[]"),
-  validatePropertyRequestBody,
+  validateCreatePropertyRequest,
   async (req, res) => {
     try {
       if (!req.files || !req.files.length) {
         return res.status(400).send("Property photos required");
       }
       const { userId } = res.locals;
-      const photoURLs = [];
-
-      for (const file of req.files as Express.Multer.File[]) {
-        const url = await uploadPhotoToAWS(file);
-        photoURLs.push(url);
-      }
+      const photoURLs = await uploadPhotosToAWS(
+        req.files as Express.Multer.File[],
+      );
 
       const property = new Property({
         ...req.body,
         photos: photoURLs,
         owner: userId,
       });
+
       await property.save();
       await User.findByIdAndUpdate(
         userId,
@@ -162,21 +161,39 @@ PropertyRouter.put(
   verifyJWToken,
   checkPropertyByIdParam,
   checkPropertyOwnership,
-  upload.array("photos"),
-  validatePropertyRequestBody,
+  upload.array("newPhotos"),
+  validateUpdatePropertyRequest,
   async (req, res) => {
     try {
-      if (!req.files || !req.files.length) {
+      const { property } = res.locals;
+      const deletedPhotoURLs = req.body.deletedPhotos || [];
+
+      const allPhotosDeleted =
+        property.photos.length === deletedPhotoURLs.length;
+      const noNewPhotos = !req.files || !req.files.length;
+
+      if (allPhotosDeleted && noNewPhotos) {
         return res.status(400).send("Property photos required");
       }
-      const { property } = res.locals;
+
+      await deleteAWSPhotos(deletedPhotoURLs);
+
+      const newPhotoUrls = await uploadPhotosToAWS(
+        req.files as Express.Multer.File[],
+      );
+
+      await Property.findByIdAndUpdate(property.id, {
+        $pull: { photos: { $in: deletedPhotoURLs } },
+      });
+
       const updatedProperty = await Property.findByIdAndUpdate(
         property.id,
-        req.body,
         {
-          new: true,
+          ...req.body,
+          $push: { photos: { $each: newPhotoUrls } },
         },
-      ).populate("owner -password");
+        { new: true },
+      ).populate("owner", "-password");
 
       res.status(200).send(updatedProperty);
     } catch (e) {
@@ -206,7 +223,7 @@ PropertyRouter.patch(
         {
           new: true,
         },
-      ).populate("owner -password");
+      ).populate("owner", "-password");
 
       res.status(200).send(updatedProperty);
     } catch (e) {

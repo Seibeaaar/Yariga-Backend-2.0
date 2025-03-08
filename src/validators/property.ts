@@ -27,7 +27,7 @@ import {
 } from "@/types/property";
 import * as yup from "yup";
 
-export const PROPERTY_DATA_VALIDATION_SCHEMA = yup.object({
+export const PROPERTY_DATA_SCHEMA = {
   title: yup.string().required("Property title required").trim(),
   description: yup
     .string()
@@ -104,4 +104,12 @@ export const PROPERTY_DATA_VALIDATION_SCHEMA = yup.object({
   facilities: yup
     .array()
     .of(yup.mixed<PROPERTY_FACILITY>().oneOf(Object.values(PROPERTY_FACILITY))),
+};
+
+export const CREATE_PROPERTY_VALIDATION_SCHEMA =
+  yup.object(PROPERTY_DATA_SCHEMA);
+
+export const UPDATE_PROPERTY_VALIDATION_SCHEMA = yup.object({
+  ...PROPERTY_DATA_SCHEMA,
+  deletedPhotos: yup.array().of(yup.string().url()).ensure(),
 });
