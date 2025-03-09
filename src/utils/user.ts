@@ -2,7 +2,7 @@ import Agreement from "@/models/Agreement";
 import Property from "@/models/Property";
 import { AGREEMENT_STATUS, AGREEMENT_TYPE } from "@/types/agreement";
 import { UserDocument, User } from "@/types/user";
-import { castToObjectId } from "./common";
+import { castToObjectId, isDefined } from "./common";
 
 export const getUserFullName = (user: UserDocument) =>
   `${user.firstName} ${user.lastName}`;
@@ -37,12 +37,18 @@ export const getLandlordStats = async (user: User) => {
     },
   ]);
 
+  const agreementsAggregate = agreements[0];
+
   return {
     propertiesForRent,
     propertiesForSale,
-    agreementsTotal: agreements[0].total ?? 0,
-    tenantsCount: user.tenants?.length,
-    agreementsCount: agreements[0].count ?? 0,
+    agreementsTotal: isDefined(agreementsAggregate)
+      ? agreementsAggregate.total
+      : 0,
+    tenantsCount: isDefined(user.tenants) ? user.tenants.length : 0,
+    agreementsCount: isDefined(agreementsAggregate)
+      ? agreementsAggregate.count
+      : 0,
   };
 };
 
