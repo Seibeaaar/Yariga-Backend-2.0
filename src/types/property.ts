@@ -13,7 +13,7 @@ export enum PROPERTY_FACILITY {
   Balcony = "balcony",
   WiFi = "wifi",
   Pets = "pets",
-  Kitchen = "kitched",
+  Kitchen = "kitchen",
   Pool = "pool",
   Bathroom = "bathroom",
 }
