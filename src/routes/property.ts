@@ -161,7 +161,7 @@ PropertyRouter.put(
   verifyJWToken,
   checkPropertyByIdParam,
   checkPropertyOwnership,
-  upload.array("newPhotos"),
+  upload.array("photos[]"),
   validateUpdatePropertyRequest,
   async (req, res) => {
     try {
