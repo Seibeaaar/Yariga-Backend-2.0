@@ -69,12 +69,16 @@ export const AGREEMENT_BASIC_DATA_SCHEMA = {
     .test(
       "startDate",
       "Start date should be in the future",
-      (v: string) => dayjs(v).diff(dayjs(), "d") >= MIN_START_DATE_THRESHOLD,
+      (v: string) =>
+        dayjs(v).startOf("d").diff(dayjs().startOf("d"), "d") >=
+        MIN_START_DATE_THRESHOLD,
     )
     .test(
       "startDate",
       `Start date should not be in more than ${MAX_START_DATE_THRESHOLD} days`,
-      (v: string) => dayjs(v).diff(dayjs(), "d") <= MAX_START_DATE_THRESHOLD,
+      (v: string) =>
+        dayjs(v).startOf("d").diff(dayjs().startOf("d"), "d") <=
+        MAX_START_DATE_THRESHOLD,
     ),
   endDate: yup.string().when("type", ([type], schema) => {
     if (type === AGREEMENT_TYPE.Rent) {
