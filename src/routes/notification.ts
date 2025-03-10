@@ -42,9 +42,9 @@ NotificationRouter.get("/read", verifyJWToken, async (req, res) => {
 
 NotificationRouter.put("/read", verifyJWToken, async (req, res) => {
   try {
-    const { notificationIds } = req.body;
+    const { notificationsIds } = req.body;
 
-    const bulkOperations = notificationIds.map((_id: string) => ({
+    const bulkOperations = notificationsIds.map((_id: string) => ({
       updateOne: {
         filter: { _id: _id },
         update: { $set: { isRead: true } },
@@ -56,7 +56,7 @@ NotificationRouter.put("/read", verifyJWToken, async (req, res) => {
     res
       .status(200)
       .send(
-        `Notifications ${notificationIds.join(", ")} have been read successfully.`,
+        `Notifications ${notificationsIds.join(", ")} have been read successfully.`,
       );
   } catch (e) {
     res.status(500).send(generateErrorMesaage(e));
