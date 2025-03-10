@@ -83,6 +83,10 @@ export const UserSchema = new Schema({
     type: String,
     default: null,
   },
+  profileComplete: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 export default model("User", UserSchema);
