@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { generateErrorMesaage } from "@/utils/common";
+import { generateErrorMesaage, isDefined } from "@/utils/common";
 import {
   CREATE_PROPERTY_VALIDATION_SCHEMA,
   UPDATE_PROPERTY_VALIDATION_SCHEMA,
@@ -77,12 +77,12 @@ export const checkPropertyNumberLimit = async (
   next: NextFunction,
 ) => {
   try {
-    const { userId } = res.locals;
-    const userPropertiesCount = await Property.find({
-      owner: userId,
-    }).countDocuments();
+    const { user } = res.locals;
 
-    if (userPropertiesCount === MAX_PROPERTY_NUMBER) {
+    if (
+      isDefined(user.properties) &&
+      user.properties.length === MAX_PROPERTY_NUMBER
+    ) {
       throw new Error(
         `You cannot exceed the limit of ${MAX_PROPERTY_NUMBER} propeerties in your ownership`,
       );
@@ -91,6 +91,24 @@ export const checkPropertyNumberLimit = async (
     next();
   } catch (e) {
     res.status(400).send(generateErrorMesaage(e));
+  }
+};
+
+export const checkCanAddFirstProperty = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { user } = res.locals;
+
+    if (isDefined(user.properties) && user.properties.length > 0) {
+      throw new Error(`You've already added your first property`);
+    }
+
+    next();
+  } catch (e) {
+    res.status(403).send(generateErrorMesaage(e));
   }
 };
 

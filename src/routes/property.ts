@@ -8,6 +8,7 @@ import {
   checkIfTenant,
 } from "@/middlewares/common";
 import {
+  checkCanAddFirstProperty,
   checkPropertyByIdParam,
   checkPropertyNotSold,
   checkPropertyNumberLimit,
@@ -106,6 +107,51 @@ PropertyRouter.post(
       });
 
       res.status(200).send(paginatedResponse);
+    } catch (e) {
+      res.status(500).send(generateErrorMesaage(e));
+    }
+  },
+);
+
+PropertyRouter.post(
+  "/add-first",
+  verifyJWToken,
+  fetchUserFromTokenData,
+  checkIfLandlord,
+  checkCanAddFirstProperty,
+  upload.array("photos[]"),
+  validateCreatePropertyRequest,
+  async (req, res) => {
+    try {
+      if (!req.files || !req.files.length) {
+        return res.status(400).send("Property photos required");
+      }
+      const { userId } = res.locals;
+      const photoURLs = await uploadPhotosToAWS(
+        req.files as Express.Multer.File[],
+      );
+
+      const property = new Property({
+        ...req.body,
+        photos: photoURLs,
+        owner: userId,
+      });
+
+      await property.save();
+      await User.findByIdAndUpdate(
+        userId,
+        {
+          $push: {
+            properties: property.id,
+          },
+          onboardingStep: null,
+        },
+        {
+          new: true,
+        },
+      );
+
+      res.status(201).send(property);
     } catch (e) {
       res.status(500).send(generateErrorMesaage(e));
     }

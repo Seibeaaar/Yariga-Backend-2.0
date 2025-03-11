@@ -11,7 +11,7 @@ import {
 } from "@/middlewares/common";
 import { generateErrorMesaage, omitPasswordForUser } from "@/utils/common";
 import { upload, uploadPhotosToAWS } from "@/utils/media";
-import { USER_ROLE } from "@/types/user";
+import { USER_ONBOARDING_STEP, USER_ROLE } from "@/types/user";
 import { getLandlordStats, getTenantStats } from "@/utils/user";
 
 const UserRouter = Router();
@@ -23,10 +23,21 @@ UserRouter.post(
   async (req, res) => {
     try {
       const { userId } = res.locals;
+      const nextOnboardingStep =
+        req.body.role === USER_ROLE.Landlord
+          ? USER_ONBOARDING_STEP.AddProperty
+          : USER_ONBOARDING_STEP.SetPreferences;
 
-      const completedUser = await User.findByIdAndUpdate(userId, req.body, {
-        new: true,
-      });
+      const completedUser = await User.findByIdAndUpdate(
+        userId,
+        {
+          ...req.body,
+          onboardingStep: nextOnboardingStep,
+        },
+        {
+          new: true,
+        },
+      );
 
       res.status(200).send(omitPasswordForUser(completedUser!));
     } catch (e) {
@@ -76,7 +87,8 @@ UserRouter.post(
       const updatedUser = await User.findByIdAndUpdate(
         userId,
         {
-          preferences: req.body,
+          preferences: req.body.preferences,
+          ...(req.body.initial && { onboardingStep: null }),
         },
         {
           new: true,
