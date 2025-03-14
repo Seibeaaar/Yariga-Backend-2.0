@@ -1,5 +1,5 @@
 import { Schema, model } from "mongoose";
-import { AUTH_PROVIDER, USER_ROLE } from "@/types/user";
+import { AUTH_PROVIDER, USER_ROLE, USER_ONBOARDING_STEP } from "@/types/user";
 import { MAX_RATING, MIN_RATING } from "@/constants/common";
 import { PropertyPreferences } from "./Preferences";
 
@@ -82,6 +82,17 @@ export const UserSchema = new Schema({
   updatedAt: {
     type: String,
     default: null,
+  },
+  profileComplete: {
+    type: Boolean,
+    default: false,
+  },
+  onboardingStep: {
+    type: String,
+    enum: {
+      values: Object.values(USER_ONBOARDING_STEP),
+    },
+    default: USER_ONBOARDING_STEP.CompleteProfile,
   },
 });
 
